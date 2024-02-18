@@ -37,7 +37,6 @@ perform_incr_backup() {
         rsync "${PARAMETERS[*]}" --link-dest="${LAST_BACKUP}" "${SRC_DIR}" "${DST_DIR}backup_incr-${TIMESTAMP}/"
 }
 
-
 # Clean up old backups, keeping only backups from the last N days and
 # ensuring the two most recent backups are retained regardless of age.
 cleanup_old_backups() {
@@ -55,5 +54,3 @@ main() {
 
 # Execute the main function
 main
-
-
