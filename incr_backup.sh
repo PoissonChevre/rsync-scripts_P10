@@ -32,16 +32,24 @@ PARAMTERS=(
     -e ssh                  # ssh remote
 )
 
-# Perform an incremental backup
-perform_incr_backup() {
-        rsync "${PARAMETERS[*]}" --link-dest="${LAST_BACKUP}" "${SRC_DIR}" "${DST_DIR}backup_incr-${TIMESTAMP}/"
+# Find the last backup
+find_last_backup() {
+    LAST_BACKUP=$(ssh rsync_adm@backup-srv "ls -d ${DST_DIR}backup_incr_* 2>/dev/null | tail -n 1")
+    echo "Last backup: $LAST_BACKUP"
 }
 
-# Clean up old backups, keeping only backups from the last N days and
-# ensuring the two most recent backups are retained regardless of age.
-cleanup_old_backups() {
-    echo "Cleaning up old backups..."
-    ssh rsync_adm@backup-srv "find ${DST_DIR} -maxdepth 1 -name 'backup_incr_*' -mtime +${RETENTION} 2>/dev/null | sort | head -n -2 | xargs -r rm -rf"
+# Perform an incremental backup
+perform_incr_backup() {
+    find_last_backup
+    # Si une sauvegarde incrémentale précédente est trouvée, effectuer une sauvegarde incrémentale
+    if [ -n "$LAST_BACKUP" ]; then
+        echo "Performing incremental backup..."
+        rsync "${PARAMETERS[*]}" --link-dest="${LAST_BACKUP}" "${SRC_DIR}" "${DST_DIR}backup_incr-${TIMESTAMP}/"
+    else
+        # Si aucune sauvegarde incrémentale n'est trouvée, effectuer une sauvegarde complète
+        echo "No previous incremental backup found. Performing a full backup..."
+        rsync "${PARAMETERS[*]}" "${SRC_DIR}" "${DST_DIR}backup_incr-${TIMESTAMP}/"
+    fi
 }
 
 # Main execution flow
