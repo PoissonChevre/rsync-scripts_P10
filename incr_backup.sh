@@ -25,11 +25,11 @@ SRC_DIR="$1"
 RETENTION="$2"
 DST_DIR="rsync_adm@backup-srv:~/backup_storage/"
 TIMESTAMP=$(date +%Y%m%d-%a)
-PARAMTERS=(
-    -a                      # --archive, equivalent to -rlptgoD (--recusrsive;--links;--perms;--times;--group;--owner;equivalent to --devices & --specials)
-    -v                      # --verbose
-    -P                      # equivalent to --partial --progress
-    -e ssh                  # ssh remote
+PARAMETERS=(
+    -a      # --archive, equivalent to -rlptgoD (--recursive;--links;--perms;--times;--group;--owner;equivalent to --devices & --specials)
+    -v      # --verbose
+    -P      # equivalent to --partial --progress
+    -e ssh  # ssh remote
 )
 
 # Find the last backup
@@ -44,11 +44,11 @@ perform_incr_backup() {
     # Si une sauvegarde incrémentale précédente est trouvée, effectuer une sauvegarde incrémentale
     if [ -n "$LAST_BACKUP" ]; then
         echo "Performing incremental backup..."
-        rsync "${PARAMETERS[*]}" --link-dest="${LAST_BACKUP}" "${SRC_DIR}" "${DST_DIR}backup_incr-${TIMESTAMP}/"
+        rsync "${PARAMETERS[@]}" --link-dest="${LAST_BACKUP}" "${SRC_DIR}" "${DST_DIR}backup_incr-${TIMESTAMP}/"
     else
         # Si aucune sauvegarde incrémentale n'est trouvée, effectuer une sauvegarde complète
         echo "No previous incremental backup found. Performing a full backup..."
-        rsync "${PARAMETERS[*]}" "${SRC_DIR}" "${DST_DIR}backup_incr-${TIMESTAMP}/"
+        rsync "${PARAMETERS[@]}" "${SRC_DIR}" "${DST_DIR}backup_incr-${TIMESTAMP}/"
     fi
 }
 
@@ -56,11 +56,9 @@ perform_incr_backup() {
 # ensuring the two most recent backups are retained regardless of age.
 cleanup_old_backups() {
     echo "Cleaning up old backups..."
-    
     # Remove old backups (full and incremental) based on RETENTION days
-    ssh rsync_adm@backup-srv "find ${DST_DIR} -maxdepth 1 \( -name 'backup_incr_*'\) -mtime +${RETENTION} -exec rm -rf {} +"
+    ssh rsync_adm@backup-srv "find ${DST_DIR} -maxdepth 1 -type d -name 'backup_incr_*' -mtime +${RETENTION} -exec rm -rf {} \;"
 }
-
 
 # Main execution flow
 main() {
