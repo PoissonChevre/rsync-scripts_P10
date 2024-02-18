@@ -8,23 +8,24 @@
 # Description: Performs an incremental backup using rsync, keeping backups
 # from the specified number of days and ensuring at least the two most recent
 # backups are always retained.
-# Usage: ./backup_script.sh <SRC_DIR> <RETENTION>
-# Example: ./backup_script.sh /path/to/SRC_DIR/ 7
+# Usage: ./backup_script.sh <TARGET> <RETENTION>
+# Example: ./backup_script.sh /path/to/TARGET/ 7
 # Note: Ensure SSH password-less authentication is set up for rsync_adm@backup-srv.
 #       https://explainshell.com/explain/1/rsync
 # -----------------------------------------------------------------------------
 
 # Check for required arguments
 if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 <SRC_DIR> <RETENTION>"
+    echo "Usage: $0 <TARGET> <RETENTION>"
     exit 1
 fi
 
 # Assign arguments to variables
-SRC_DIR="$1"
+TARGET="$1"
 RETENTION="$2"
-DST_DIR="rsync_adm@backup-srv:~/backup_storage/"
-TIMESTAMP=$(date +%Y%m%d-%a)
+SRC_DIR=~/${TARGET}
+DST_DIR="rsync_adm@backup-srv:~/backup_storage/${TARGET}/"
+TIMESTAMP=$(date +%Y-%m-%d-%H:%M)
 PARAMETERS=(
     -a      # --archive, equivalent to -rlptgoD (--recursive;--links;--perms;--times;--group;--owner;equivalent to --devices & --specials)
     -v      # --verbose
@@ -44,11 +45,11 @@ perform_incr_backup() {
     # Si une sauvegarde incrémentale précédente est trouvée, effectuer une sauvegarde incrémentale
     if [ -n "$LAST_BACKUP" ]; then
         echo "Performing incremental backup..."
-        rsync "${PARAMETERS[@]}" --link-dest="${LAST_BACKUP}" "${SRC_DIR}" "${DST_DIR}backup_incr-${TIMESTAMP}/"
+        rsync "${PARAMETERS[@]}" --link-dest="${LAST_BACKUP}" "${TARGET}" "${DST_DIR}/backup_incr_${TIMESTAMP}/"
     else
         # Si aucune sauvegarde incrémentale n'est trouvée, effectuer une sauvegarde complète
         echo "No previous incremental backup found. Performing a full backup..."
-        rsync "${PARAMETERS[@]}" "${SRC_DIR}" "${DST_DIR}backup_incr-${TIMESTAMP}/"
+        rsync "${PARAMETERS[@]}" "${TARGET}" "${DST_DIR}backup_incr_${TIMESTAMP}/"
     fi
 }
 
