@@ -34,20 +34,9 @@ PARAMTERS=(
 
 # Perform an incremental backup
 perform_incr_backup() {
-    local LAST_BACKUP=$(find_last_backup)
-    if [ -z "$LAST_BACKUP" ]; then
-        echo "No previous backup found. Proceeding without --link-dest."
-        rsync "${PARAMETERS[*]}" "${SRC_DIR}" "${DST_DIR}backup-${TIMESTAMP}/"
-    else
-        echo "Performing incremental backup using the most recent backup as reference."
         rsync "${PARAMETERS[*]}" --link-dest="${LAST_BACKUP}" "${SRC_DIR}" "${DST_DIR}backup_incr-${TIMESTAMP}/"
-    fi
 }
 
-# Find the most recent backup directory
-find_last_backup() {
-    ssh rsync_adm@backup-srv "ls -d ${DST_DIR}backup-* 2>/dev/null | sort | tail -n 1"
-}
 
 # Clean up old backups, keeping only backups from the last N days and
 # ensuring the two most recent backups are retained regardless of age.
