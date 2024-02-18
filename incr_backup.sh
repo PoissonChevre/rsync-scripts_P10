@@ -1,39 +1,70 @@
 #!/bin/bash
 
-# https://explainshell.com/explain/1/rsync
+# -----------------------------------------------------------------------------
+# Incremental Backup Script
+# -----------------------------------------------------------------------------
+# Author: Renaud CHARLIER
+# Date: 18-02-2024
+# Description: Performs an incremental backup using rsync, keeping backups
+# from the specified number of days and ensuring at least the two most recent
+# backups are always retained.
+# Usage: ./backup_script.sh <SRC_DIR> <RETENTION>
+# Example: ./backup_script.sh /path/to/SRC_DIR/ 7
+# Note: Ensure SSH password-less authentication is set up for rsync_adm@backup-srv.
+#       https://explainshell.com/explain/1/rsync
+# -----------------------------------------------------------------------------
 
-
-# Configuration
-SOURCE="~/MACHINES"
-DESTINATION="rsync_adm@backup-srv:~/backup_storage/MACHINES/"
-DATE=$(date +%Y-%m-%d)
-DAY_OF_WEEK=$(date +%u) # Monday = 1, Sunday = 7
-
-# Backup directories
-FULL_BACKUP_DIR="full-${DATE}"
-INCREMENTAL_BACKUP_DIR="incr-${DATE}"
-
-# Perform a full backup on Saturday
-if [ "$DAY_OF_WEEK" -eq 7 ]; then
-    echo "Creating a full backup in $FULL_BACKUP_DIR"
-    rsync -av -e ssh $SOURCE $DESTINATION$FULL_BACKUP_DIR
-
-# Perform incremental backups from Monday to Saturday
-elif [ "$DAY_OF_WEEK" -ne 7 ]; then
-    # Find the last full backup directory
-    LAST_FULL_BACKUP=$(ssh rsync_adm@backup-srv "ls -d ~/backup_storage/full-* 2>/dev/null | tail -n 1")
-    LAST_FULL_BACKUP=$(basename "$LAST_FULL_BACKUP")
-
-    # If no full backup is found (unlikely scenario), exit with an error
-    if [ -z "$LAST_FULL_BACKUP" ]; then
-        echo "Error: No full backup found."
-        exit 1
-    fi
-
-    echo "Creating an incremental backup based on $LAST_FULL_BACKUP in $INCREMENTAL_BACKUP_DIR"
-    rsync -av --delete -e ssh --link-dest=$DESTINATION$LAST_FULL_BACKUP $SOURCE $DESTINATION$INCREMENTAL_BACKUP_DIR
-else
-    echo "No backup scheduled for Sunday."
+# Check for required arguments
+if [ "$#" -ne 2 ]; then
+    echo "Usage: $0 <SRC_DIR> <RETENTION>"
+    exit 1
 fi
 
-# Note: Ensure SSH password-less authentication is set up for rsync_adm@backup-srv.
+# Assign arguments to variables
+SRC_DIR="$1"
+RETENTION="$2"
+DST_DIR="rsync_adm@backup-srv:~/backup_storage/"
+TIMESTAMP=$(date +%Y%m%d-%a)
+PARAMTERS=(
+    -a                      # --archive, equivalent to -rlptgoD (--recusrsive;--links;--perms;--times;--group;--owner;equivalent to --devices & --specials)
+    -v                      # --verbose
+    -P                      # equivalent to --partial --progress
+    -e ssh                  # ssh remote
+)
+
+# Perform an incremental backup
+perform_incr_backup() {
+    local LAST_BACKUP=$(find_last_backup)
+    if [ -z "$LAST_BACKUP" ]; then
+        echo "No previous backup found. Proceeding without --link-dest."
+        rsync "${PARAMETERS[*]}" "${SRC_DIR}" "${DST_DIR}backup-${TIMESTAMP}/"
+    else
+        echo "Performing incremental backup using the most recent backup as reference."
+        rsync "${PARAMETERS[*]}" --link-dest="${LAST_BACKUP}" "${SRC_DIR}" "${DST_DIR}backup_incr-${TIMESTAMP}/"
+    fi
+}
+
+# Find the most recent backup directory
+find_last_backup() {
+    ssh rsync_adm@backup-srv "ls -d ${DST_DIR}backup-* 2>/dev/null | sort | tail -n 1"
+}
+
+# Clean up old backups, keeping only backups from the last N days and
+# ensuring the two most recent backups are retained regardless of age.
+cleanup_old_backups() {
+    echo "Cleaning up old backups..."
+    ssh rsync_adm@backup-srv "find ${DST_DIR} -maxdepth 1 -name 'backup_incr_*' -mtime +${RETENTION} 2>/dev/null | sort | head -n -2 | xargs -r rm -rf"
+}
+
+# Main execution flow
+main() {
+    echo "Starting backup process..."
+    perform_incr_backup
+    cleanup_old_backups
+    echo "Backup and cleanup completed."
+}
+
+# Execute the main function
+main
+
+

@@ -1,46 +1,78 @@
 #!/bin/bash
 
-# https://explainshell.com/explsain/1/rsync
+# -----------------------------------------------------------------------------
+# Differential Backup Script
+# -----------------------------------------------------------------------------
+# Author: Renaud CHARLIER
+# Date: 18-02-2024
+# Description: Performs a differential backup using rsync, keeping backups
+# from the specified number of days and ensuring at least the two most recent
+# backups are always retained.
+# Usage: ./backup_script.sh <SRC_DIR> <RETENTION>
+# Example: ./backup_script.sh /path/to/SRC_DIR/ 7
+# Note: Ensure SSH password-less authentication is set up for rsync_adm@backup-srv.
+#       https://explainshell.com/explain/1/rsync
+# -----------------------------------------------------------------------------
 
-
-# Configuration
-SOURCE="/path/to/source/"
-DESTINATION="rsync_adm@backup-srv:~/backup_storage/"
-DATE=$(date +%Y-%m-%d)
-DAY_OF_WEEK=$(date +%u) # Monday = 1, Sunday = 7
-
-# Backup directories
-FULL_BACKUP_DIR="full-${DATE}"
-DIFFERENTIAL_BACKUP_DIR="diff-${DATE}"
-
-# Perform a full backup on Saturday
-if [ "$DAY_OF_WEEK" -eq 6 ]; then
-    echo "Creating a full backup in $FULL_BACKUP_DIR"
-    rsync -avz -e ssh $SOURCE $DESTINATION$FULL_BACKUP_DIR
-
-    # Delete the previous full backup (if exists)
-    PREVIOUS_FULL_BACKUP=$(ssh rsync_adm@backup-srv "ls -dt ~/backup_storage/full-* 2>/dev/null | head -n 1")
-    if [ -n "$PREVIOUS_FULL_BACKUP" ]; then
-        echo "Deleting the previous full backup: $PREVIOUS_FULL_BACKUP"
-        ssh rsync_adm@backup-srv "rm -rf $PREVIOUS_FULL_BACKUP"
-    fi
-
-# Perform differential backups from Monday to Saturday
-elif [ "$DAY_OF_WEEK" -ne 7 ]; then
-    # Find the last Saturday's full backup directory
-    LAST_SATURDAY=$(date -d "last Saturday" +%Y-%m-%d)
-    FULL_BACKUP_DIR="full-${LAST_SATURDAY}"
-
-    # Check if the full backup exists on the server
-    if ssh rsync_adm@backup-srv [ ! -d "~/backup_storage/$FULL_BACKUP_DIR" ]; then
-        echo "Error: Last Saturday's full backup not found. Cannot perform differential backup."
-        exit 1
-    fi
-
-    echo "Creating a differential backup based on last Saturday's full backup in $DIFFERENTIAL_BACKUP_DIR"
-    rsync -avz --delete -e ssh --link-dest=$DESTINATION$FULL_BACKUP_DIR $SOURCE $DESTINATION$DIFFERENTIAL_BACKUP_DIR
-else
-    echo "No backup scheduled for Sunday."
+# Check for required arguments
+if [ "$#" -ne 2 ]; then
+    echo "Usage: $0 <SRC_DIR> <RETENTION>"
+    exit 1
 fi
 
-# Note: Ensure SSH password-less authentication is set up for rsync_adm@backup-srv.
+# Assign arguments to variables
+SRC_DIR="$1"
+RETENTION="$2"
+DST_DIR="rsync_adm@backup-srv:~/backup_storage/"
+TIMESTAMP=$(date +%Y%m%d-%a)
+PARAMETERS=(
+    -a                      # --archive, equivalent to -rlptgoD (--recusrsive;--links;--perms;--times;--group;--owner;equivalent to --devices & --specials)
+    -v                      # --verbose
+    -P                      # equivalent to --partial --progress
+    -e ssh                  # ssh remote
+)
+
+# Perform a differential backup
+perform_diff_backup() {
+    local LAST_FULL_BACKUP=$(find_last_full_backup)
+    local CURRENT_TIME=$(date +%s)
+    
+    if [ -z "$LAST_FULL_BACKUP" ] || [ $((CURRENT_TIME - $(stat -c %Y "$LAST_FULL_BACKUP"))) -ge $((RETENTION * 86400)) ]; then
+        # No existing full backup or the last full backup is older than RETENTION days
+        echo "No previous full backup found or the last full backup is older than ${RETENTION} days. Creating a new full backup."
+        rsync "${PARAMETERS[*]}" "${SRC_DIR}" "${DST_DIR}backup_diff_full-${TIMESTAMP}/"
+
+        # Remove the previous full backup
+        echo "Removing the previous full backup: $LAST_FULL_BACKUP"
+        ssh rsync_adm@backup-srv "rm -rf $LAST_FULL_BACKUP"
+    else
+        # Differential backup using the most recent full backup as reference
+        echo "Performing differential backup using the most recent full backup as reference."
+        rsync "${PARAMETERS[*]}" --link-dest="${LAST_FULL_BACKUP}" "${SRC_DIR}" "${DST_DIR}backup_diff_incr-${TIMESTAMP}/"
+    fi
+}
+
+# Find the most recent full backup directory
+find_last_full_backup() {
+    ssh rsync_adm@backup-srv "ls -d ${DST_DIR}backup_diff_full-* 2>/dev/null | sort | tail -n 1"
+}
+
+# Clean up old backups, keeping only backups from the last N days and
+# ensuring the two most recent backups are retained regardless of age.
+cleanup_old_backups() {
+    echo "Cleaning up old backups..."
+    
+    # Remove old backups (full and incremental) based on RETENTION days
+    ssh rsync_adm@backup-srv "find ${DST_DIR} -maxdepth 1 \( -name 'backup_diff_full_*' -o -name 'backup_diff_incr_*' \) -mtime +${RETENTION} 2>/dev/null | sort | xargs -r rm -rf"
+}
+
+# Main execution flow
+main() {
+    echo "Starting backup process..."
+    perform_diff_backup
+    cleanup_old_backups
+    echo "Backup and cleanup completed."
+}
+
+# Execute the main function
+main
