@@ -23,9 +23,9 @@ fi
 # Assign arguments to variables
 TARGET="$1"
 RETENTION="$2"
-SRC_DIR=~/${TARGET}
+SRC_DIR=~/${TARGET}/
 DST_DIR="rsync_adm@backup-srv:~/backup_storage/${TARGET}/"
-TIMESTAMP=$(date +%Y-%m-%d-%H:%M)
+TIMESTAMP=$(date +%Y-%m-%d_%H:%M)
 PARAMETERS=(
     -a      # --archive, equivalent to -rlptgoD (--recursive;--links;--perms;--times;--group;--owner;equivalent to --devices & --specials)
     -v      # --verbose
@@ -45,7 +45,7 @@ perform_incr_backup() {
     # Si une sauvegarde incrémentale précédente est trouvée, effectuer une sauvegarde incrémentale
     if [ -n "$LAST_BACKUP" ]; then
         echo "Performing incremental backup..."
-        rsync "${PARAMETERS[@]}" --link-dest="${LAST_BACKUP}" "${TARGET}" "${DST_DIR}/backup_incr_${TIMESTAMP}/"
+        rsync "${PARAMETERS[@]}" --link-dest="${LAST_BACKUP}" "${SRC_DIR}" "${DST_DIR}/backup_incr_${TIMESTAMP}/"
     else
         # Si aucune sauvegarde incrémentale n'est trouvée, effectuer une sauvegarde complète
         echo "No previous incremental backup found. Performing a full backup..."
