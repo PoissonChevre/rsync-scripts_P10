@@ -52,6 +52,16 @@ perform_incr_backup() {
     fi
 }
 
+# Clean up old backups, keeping only backups from the last N days and
+# ensuring the two most recent backups are retained regardless of age.
+cleanup_old_backups() {
+    echo "Cleaning up old backups..."
+    
+    # Remove old backups (full and incremental) based on RETENTION days
+    ssh rsync_adm@backup-srv "find ${DST_DIR} -maxdepth 1 \( -name 'backup_incr_*'\) -mtime +${RETENTION} -exec rm -rf {} +"
+}
+
+
 # Main execution flow
 main() {
     echo "Starting backup process..."
