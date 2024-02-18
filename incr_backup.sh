@@ -49,7 +49,7 @@ perform_incr_backup() {
     else
         # Si aucune sauvegarde incrémentale n'est trouvée, effectuer une sauvegarde complète
         echo "No previous incremental backup found. Performing a full backup..."
-        rsync "${PARAMETERS[@]}" "${TARGET}" "${DST_DIR}backup_incr_${TIMESTAMP}/"
+        rsync "${PARAMETERS[@]}" "${SRC_DIR}" "${DST_DIR}backup_incr_${TIMESTAMP}/"
     fi
 }
 
