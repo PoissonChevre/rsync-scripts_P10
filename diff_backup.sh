@@ -12,6 +12,9 @@
 # Example: ./backup_script.sh /path/to/SRC_DIR/ 7
 # Note: Ensure SSH password-less authentication is set up for rsync_adm@backup-srv.
 #       https://explainshell.com/explain/1/rsync
+#       dd if=/dev/zero of=/chemin/vers/repertoire/MACHINE/vm-1Go bs=4096 count=262144 (créé un fichier de 1Go de zéros binaires, 262144 x 4Ko)
+#       dd i f=/dev/zero of=/chemin/vers/repertoire/MACHINE/vm-2Go bs=4096 count=524288 (créé un fichier de 2Go de zéros binaires, 524288 x 4Ko)
+#       cat vm-1Go vm-2Go >> vm-3Go (créé un fichier de 3Go de zéros binaires)
 # -----------------------------------------------------------------------------
 
 # Check for required arguments
@@ -40,7 +43,7 @@ perform_diff_backup() {
     if [ -z "$LAST_FULL_BACKUP" ] || [ $((CURRENT_TIME - $(stat -c %Y "$LAST_FULL_BACKUP"))) -ge $((RETENTION * 86400)) ]; then
         # No existing full backup or the last full backup is older than RETENTION days
         echo "No previous full backup found or the last full backup is older than ${RETENTION} days. Creating a new full backup."
-        rsync "${PARAMETERS[*]}" "${SRC_DIR}" "${DST_DIR}backup_diff_full-${TIMESTAMP}/"
+        rsync "${PARAMETERS[*]}" "${SRC_DIR}" "${DST_DIR}backup_diff-FULL-${TIMESTAMP}/"
 
         # Remove the previous full backup
         echo "Removing the previous full backup: $LAST_FULL_BACKUP"
@@ -48,7 +51,7 @@ perform_diff_backup() {
     else
         # Differential backup using the most recent full backup as reference
         echo "Performing differential backup using the most recent full backup as reference."
-        rsync "${PARAMETERS[*]}" --link-dest="${LAST_FULL_BACKUP}" "${SRC_DIR}" "${DST_DIR}backup_diff_incr-${TIMESTAMP}/"
+        rsync "${PARAMETERS[*]}" --link-dest="${LAST_FULL_BACKUP}" "${SRC_DIR}" "${DST_DIR}backup_diff-${TIMESTAMP}/"
     fi
 }
 
