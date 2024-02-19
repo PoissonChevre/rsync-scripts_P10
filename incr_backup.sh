@@ -9,7 +9,7 @@
 # from the specified number of days and ensuring at least the two most recent
 # backups are always retained.
 # Usage: ./backup_script.sh <TARGET_DIR> <RETENTION>
-# Example: ./backup_script.sh TARGET_DIR 7
+# Example: ./backup_script.sh TICKETS 7
 # Note: Ensure SSH password-less authentication is set up for rsync_adm@backup-srv.
 #       https://explainshell.com/explain/1/rsync
 # -----------------------------------------------------------------------------
@@ -26,7 +26,7 @@ RETENTION="$2"
 SRC_DIR="/home/$USER/$TARGET_DIR/"
 DST_DIR="/home/$USER/backup_storage/$TARGET_DIR/"
 REMOTE="$USER@backup-srv"
-TIMESTAMP=$(date +%Y%m%d_%H:%M)
+TIMESTAMP=$(date +%Y%m%d_%H%M)
 PARAMETERS=(
     -a      # --archive, equivalent to -rlptgoD (--recursive;--links;--perms;--times;--group;--owner;equivalent to --devices & --specials)
     -v      # --verbose
@@ -52,16 +52,14 @@ perform_incr_backup() {
         echo "No previous incremental backup found. Performing a full backup..."
         rsync "${PARAMETERS[@]}" "$SRC_DIR" "$REMOTE:${DST_DIR}backup_incr_${TIMESTAMP}"
     fi
-    # Update the modification date of the backup directory immediately after its creation
-#    ssh $REMOTE "touch '${DST_DIR}backup_incr_${TIMESTAMP}/'"
 }
 
 # Clean up old backups, keeping only backups from the last N days and
 # ensuring the two most recent backups are retained regardless of age.
 cleanup_old_backups() {
     echo "Cleaning up old backups..."
-    # Remove old backups (full and incremental) based on RETENTION days
-    ssh $REMOTE "find $DST_DIR -maxdepth 1 -type d -name 'backup_incr_*' -cmin +$RETENTION -exec rm -rf {} \;"
+    # Remove old backups  based on RETENTION days (using ctime for directory change time)
+    ssh $REMOTE "find $DST_DIR -maxdepth 1 -type d -name 'backup_incr_*' -ctime +$RETENTION -exec rm -rf {} \;"
 }
 
 # Main execution flow
