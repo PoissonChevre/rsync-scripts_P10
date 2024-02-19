@@ -60,8 +60,27 @@ perform_incr_backup() {
 # ensuring the two most recent backups are retained regardless of age.
 cleanup_old_backups() {
     echo "Cleaning up old backups..."
+    # Extract timestamp from the directory name (backup_incr_YYYYMMDD_HH:MM)
+    CURRENT_TIMESTAMP=$(date +%Y%m%d_%H:%M)
+    
     # Remove old backups (full and incremental) based on RETENTION days
-#    ssh $REMOTE "find $DST_DIR -maxdepth 1 -type d -name 'backup_incr_*' -mtime +$RETENTION -exec rm -rf {} \;"
+    ssh $REMOTE "find ${DST_DIR} -maxdepth 1 -type d -name 'backup_incr_*' -exec bash -c '
+        process_old_backup \"{}\"
+    ' \;"
+}
+
+# Function to process each old backup directory
+process_old_backup() {
+    local TIMESTAMP=$(basename "$1" | cut -d_ -f3-)
+
+    # Check if the timestamp of the backup is older than the current timestamp
+    if [ "$(date -d"$TIMESTAMP" +%s)" -lt "$(date -d"$CURRENT_TIMESTAMP" +%s)" ]; then
+        # If true, remove the old backup directory
+        rm -rf "$1"
+        echo "Removed old backup: $1"
+    else
+        echo "Retaining recent backup: $1"
+    fi
 }
 
 # Main execution flow
