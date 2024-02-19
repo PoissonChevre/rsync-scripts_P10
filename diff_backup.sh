@@ -68,7 +68,6 @@ is_last_full_backup_old() {
             return 1  # Last full backup is within the RETENTION days
         fi
     fi
-    
     return 0  # No last full backup found, treat as older than RETENTION days
 }
 
@@ -82,7 +81,7 @@ perform_diff_backup() {
     elif is_last_full_backup_old; then
         # Last full backup is older than RETENTION days, create a new full backup
         echo "Last full backup is older than $RETENTION days. Creating a new full backup..."
-        rsync "${PARAMETERS[@]}" "$SRC_DIR" "${REMOTE}:${DST_DIR}backup_FULL_${TIMESTAMP}"
+        rsync "${PARAMETERS[@]}" "$SRC_DIR" "$REMOTE:${DST_DIR}backup_FULL_${TIMESTAMP}"
 
         # Remove the previous full backup
         if [ -n "$LAST_FULL_BACKUP" ]; then
@@ -92,7 +91,7 @@ perform_diff_backup() {
     else
         # Differential backup using the most recent full backup as reference
         echo "Performing differential backup using the most recent full backup as reference."
-        rsync "${PARAMETERS[@]}" --link-dest="$LAST_FULL_BACKUP" "$SRC_DIR" "${REMOTE}:${DST_DIR}backup_diff_${TIMESTAMP}"
+        rsync "${PARAMETERS[@]}" --link-dest="$LAST_FULL_BACKUP" "$SRC_DIR" "$REMOTE:${DST_DIR}backup_diff_${TIMESTAMP}"
     fi
 }
 
