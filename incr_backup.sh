@@ -61,7 +61,7 @@ perform_incr_backup() {
 cleanup_old_backups() {
     echo "Cleaning up old backups..."
     # Remove old backups (full and incremental) based on RETENTION days
-    ssh $REMOTE "find $DST_DIR -maxdepth 1 -type d -name 'backup_incr_*' -ctime +$RETENTION -exec rm -rf {} \;"
+    ssh $REMOTE "find $DST_DIR -maxdepth 1 -type d -name 'backup_incr_*' -cmin +$RETENTION -exec rm -rf {} \;"
 }
 
 # Main execution flow
