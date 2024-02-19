@@ -46,11 +46,11 @@ perform_incr_backup() {
     # Si une sauvegarde précédente est trouvée, effectuer une sauvegarde incrémentale
     if [ -n "$LAST_BACKUP" ]; then
         echo "Performing incremental backup..."
-        rsync "${PARAMETERS[@]}" --link-dest="${REMOTE}:${LAST_BACKUP}" "${SRC_DIR}" "${REMOTE}:${DST_DIR}backup_incr_${TIMESTAMP}"
+        rsync "${PARAMETERS[@]}" --link-dest "${LAST_BACKUP}" "${SRC_DIR}" "${REMOTE}:${DST_DIR}backup_incr_${TIMESTAMP}"
     else
         # Si aucune sauvegarde incrémentale n'est trouvée, effectuer une sauvegarde complète
         echo "No previous incremental backup found. Performing a full backup..."
-        rsync "${PARAMETERS[@]}" "${SRC_DIR}" "${DST_DIR}backup_incr_${TIMESTAMP}"
+        rsync "${PARAMETERS[@]}" "${SRC_DIR}" "${REMOTE}:${DST_DIR}backup_incr_${TIMESTAMP}"
     fi
 }
 
