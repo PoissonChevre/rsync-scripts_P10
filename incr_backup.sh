@@ -25,7 +25,7 @@ TARGET_DIR="$1"
 RETENTION="$2"
 SRC_DIR="/home/$USER/$TARGET_DIR/"
 DST_DIR="/home/$USER/backup_storage/$TARGET_DIR/"
-REMOTE="rsync_adm@backup-srv"
+REMOTE="$USER@backup-srv"
 TIMESTAMP=$(date +%Y%m%d_%H:%M)
 PARAMETERS=(
     -a      # --archive, equivalent to -rlptgoD (--recursive;--links;--perms;--times;--group;--owner;equivalent to --devices & --specials)
@@ -46,11 +46,11 @@ perform_incr_backup() {
     # If a previous backup is found, perform an incremental backup
     if [ -n "$LAST_BACKUP" ]; then
         echo "Performing incremental backup..."
-        rsync "$PARAMETERS[@]" --link-dest "$LAST_BACKUP" "$SRC_DIR" "$REMOTE:${DST_DIR}backup_incr_${TIMESTAMP}"
+        rsync "${PARAMETERS[@]}" --link-dest "$LAST_BACKUP" "$SRC_DIR" "$REMOTE:${DST_DIR}backup_incr_${TIMESTAMP}"
     else
         # If no previous incremental backup is found, perform a full backup
         echo "No previous incremental backup found. Performing a full backup..."
-        rsync "$PARAMETERS[@]" "$SRC_DIR" "$REMOTE:${DST_DIR}backup_incr_${TIMESTAMP}"
+        rsync "${PARAMETERS[@]}" "$SRC_DIR" "$REMOTE:${DST_DIR}backup_incr_${TIMESTAMP}"
     fi
     # Update the modification date of the backup directory immediately after its creation
 #    ssh $REMOTE "touch '${DST_DIR}backup_incr_${TIMESTAMP}/'"
