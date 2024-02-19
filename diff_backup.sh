@@ -46,6 +46,7 @@ find_last_full_backup() {
         echo "No previous full backup found. Forcing the creation of a new full backup..."
         rsync "${PARAMETERS[@]}" "$SRC_DIR" "$REMOTE:${DST_DIR}backup_FULL_${TIMESTAMP}"
         LAST_FULL_BACKUP=$(ssh $REMOTE "ls -d ${DST_DIR}backup_FULL_* 2>/dev/null | sort | tail -n 1")
+        exit 0
     else
         echo "Last full backup: $LAST_FULL_BACKUP"
     fi
