@@ -8,24 +8,25 @@
 # Description: Performs an incremental backup using rsync, keeping backups
 # from the specified number of days and ensuring at least the two most recent
 # backups are always retained.
-# Usage: ./backup_script.sh <TARGET> <RETENTION>
-# Example: ./backup_script.sh /path/to/TARGET/ 7
+# Usage: ./backup_script.sh <TARGET_DIR> <RETENTION>
+# Example: ./backup_script.sh TARGET_DIR 7
 # Note: Ensure SSH password-less authentication is set up for rsync_adm@backup-srv.
 #       https://explainshell.com/explain/1/rsync
 # -----------------------------------------------------------------------------
 
 # Check for required arguments
 if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 <TARGET> <RETENTION>"
+    echo "Usage: $0 <TARGET_DIR> <RETENTION>"
     exit 1
 fi
 
 # Assign arguments to variables
-TARGET="$1"
+TARGET_DIR="$1"
 RETENTION="$2"
-SRC_DIR=~/${TARGET}/
-DST_DIR="rsync_adm@backup-srv:~/backup_storage/${TARGET}/"
-TIMESTAMP=$(date +%Y-%m-%d_%H:%M)
+SRC_DIR="/home/$USER/$TARGET_DIR/"
+DST_DIR="/home/$USER/backup_storage/$TARGET_DIR/"
+REMOTE="rsync_adm@backup-srv"
+TIMESTAMP=$(date +%Y%m%d_%H:%M)
 PARAMETERS=(
     -a      # --archive, equivalent to -rlptgoD (--recursive;--links;--perms;--times;--group;--owner;equivalent to --devices & --specials)
     -v      # --verbose
@@ -35,14 +36,14 @@ PARAMETERS=(
 
 # Find the last backup
 find_last_backup() {
-    LAST_BACKUP=$(ssh rsync_adm@backup-srv "ls -d ${DST_DIR}backup_incr_* 2>/dev/null | tail -n 1")
+    LAST_BACKUP=$(ssh $REMOTE "ls -d ${DST_DIR}backup_incr_* 2>/dev/null | tail -n 1")
     echo "Last backup: $LAST_BACKUP"
 }
 
 # Perform an incremental backup
 perform_incr_backup() {
     find_last_backup
-    # Si une sauvegarde incrémentale précédente est trouvée, effectuer une sauvegarde incrémentale
+    # Si une sauvegarde précédente est trouvée, effectuer une sauvegarde incrémentale
     if [ -n "$LAST_BACKUP" ]; then
         echo "Performing incremental backup..."
         rsync "${PARAMETERS[@]}" --link-dest="${LAST_BACKUP}" "${SRC_DIR}" "${DST_DIR}/backup_incr_${TIMESTAMP}/"
@@ -58,7 +59,7 @@ perform_incr_backup() {
 cleanup_old_backups() {
     echo "Cleaning up old backups..."
     # Remove old backups (full and incremental) based on RETENTION days
-    ssh rsync_adm@backup-srv "find ${DST_DIR} -maxdepth 1 -type d -name 'backup_incr_*' -mtime +${RETENTION} -exec rm -rf {} \;"
+    ssh $REMOTE "find ${DST_DIR} -maxdepth 1 -type d -name 'backup_incr_*' -mtime +${RETENTION} -exec rm -rf {} \;"
 }
 
 # Main execution flow
