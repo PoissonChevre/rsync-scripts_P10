@@ -51,7 +51,7 @@ perform_diff_backup() {
     else
         # Differential backup using the most recent full backup as reference
         echo "Performing differential backup using the most recent full backup as reference."
-        rsync "${PARAMETERS[*]}" --link-dest="${LAST_FULL_BACKUP}" "${SRC_DIR}" "${DST_DIR}backup_diff-${TIMESTAMP}/"
+        rsync "${PARAMETERS[*]}" --link-dest "${LAST_FULL_BACKUP}" "${SRC_DIR}" "${DST_DIR}backup_diff-${TIMESTAMP}/"
     fi
 }
 
