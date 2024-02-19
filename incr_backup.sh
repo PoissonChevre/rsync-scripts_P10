@@ -53,7 +53,7 @@ perform_incr_backup() {
         rsync "$PARAMETERS[@]" "$SRC_DIR" "$REMOTE:${DST_DIR}backup_incr_${TIMESTAMP}"
     fi
     # Update the modification date of the backup directory immediately after its creation
-    ssh $REMOTE "touch '${DST_DIR}backup_incr_${TIMESTAMP}/'"
+#    ssh $REMOTE "touch '${DST_DIR}backup_incr_${TIMESTAMP}/'"
 }
 
 # Clean up old backups, keeping only backups from the last N days and
@@ -61,7 +61,7 @@ perform_incr_backup() {
 cleanup_old_backups() {
     echo "Cleaning up old backups..."
     # Remove old backups (full and incremental) based on RETENTION days
-    ssh $REMOTE "find $DST_DIR -maxdepth 1 -type d -name 'backup_incr_*' -mtime +$RETENTION -exec rm -rf {} \;"
+#    ssh $REMOTE "find $DST_DIR -maxdepth 1 -type d -name 'backup_incr_*' -mtime +$RETENTION -exec rm -rf {} \;"
 
 # Main execution flow
 main() {
