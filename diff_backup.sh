@@ -37,6 +37,9 @@ PARAMETERS=(
     -e ssh  # ssh remote
 )
 
+# Variable to track if a full backup has been created
+FULL_BACKUP_CREATED=false
+
 # Find the last full backup or create one if there is no full backup
 find_last_full_backup() {
     LAST_FULL_BACKUP=$(ssh $REMOTE "ls -d ${DST_DIR}backup_FULL_* 2>/dev/null | sort | tail -n 1")
@@ -45,8 +48,7 @@ find_last_full_backup() {
         # No existing full backup found, force the creation of a new one
         echo "No previous full backup found. Forcing the creation of a new full backup..."
         rsync "${PARAMETERS[@]}" "$SRC_DIR" "$REMOTE:${DST_DIR}backup_FULL_${TIMESTAMP}"
-        LAST_FULL_BACKUP=$(ssh $REMOTE "ls -d ${DST_DIR}backup_FULL_* 2>/dev/null | sort | tail -n 1")
-        exit 0
+        FULL_BACKUP_CREATED=true
     else
         echo "Last full backup: $LAST_FULL_BACKUP"
     fi
@@ -73,7 +75,10 @@ is_last_full_backup_old() {
 perform_diff_backup() {
     find_last_full_backup
 
-    if is_last_full_backup_old; then
+    if $FULL_BACKUP_CREATED; then
+        # Skip creating a differential backup if a full backup was just created
+        echo "Skipping differential backup as a full backup was just created."
+    elif is_last_full_backup_old; then
         # Last full backup is older than RETENTION days, create a new full backup
         echo "Last full backup is older than $RETENTION days. Creating a new full backup..."
         rsync "${PARAMETERS[@]}" "$SRC_DIR" "${REMOTE}:${DST_DIR}backup_FULL_${TIMESTAMP}"
@@ -101,6 +106,7 @@ cleanup_old_backups() {
 # Main execution flow
 main() {
     echo "Starting backup process..."
+    find_last_full_backup
     perform_diff_backup
     cleanup_old_backups
     echo "Backup and cleanup completed."
@@ -108,3 +114,4 @@ main() {
 
 # Execute the main function
 main
+
