@@ -52,6 +52,8 @@ perform_incr_backup() {
         echo "No previous incremental backup found. Performing a full backup..."
         rsync "${PARAMETERS[@]}" "${SRC_DIR}" "${REMOTE}:${DST_DIR}backup_incr_${TIMESTAMP}"
     fi
+    # Mise à jour de la date de modification du répertoire de backup immédiatement après sa création
+    ssh $REMOTE "touch '${DST_DIR}backup_incr_${TIMESTAMP}/'"
 }
 
 # Clean up old backups, keeping only backups from the last N days and
