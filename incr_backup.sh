@@ -43,26 +43,25 @@ find_last_backup() {
 # Perform an incremental backup
 perform_incr_backup() {
     find_last_backup
-    # Si une sauvegarde précédente est trouvée, effectuer une sauvegarde incrémentale
+    # If a previous backup is found, perform an incremental backup
     if [ -n "$LAST_BACKUP" ]; then
         echo "Performing incremental backup..."
-        rsync "${PARAMETERS[@]}" --link-dest "${LAST_BACKUP}" "${SRC_DIR}" "${REMOTE}:${DST_DIR}backup_incr_${TIMESTAMP}"
+        rsync "$PARAMETERS[@]" --link-dest "$LAST_BACKUP" "$SRC_DIR" "$REMOTE:${DST_DIR}backup_incr_${TIMESTAMP}"
     else
-        # Si aucune sauvegarde incrémentale n'est trouvée, effectuer une sauvegarde complète
+        # If no previous incremental backup is found, perform a full backup
         echo "No previous incremental backup found. Performing a full backup..."
-        rsync "${PARAMETERS[@]}" "${SRC_DIR}" "${REMOTE}:${DST_DIR}backup_incr_${TIMESTAMP}"
+        rsync "$PARAMETERS[@]" "$SRC_DIR" "$REMOTE:${DST_DIR}backup_incr_${TIMESTAMP}"
     fi
-    # Mise à jour de la date de modification du répertoire de backup immédiatement après sa création
- #   ssh $REMOTE "touch '${DST_DIR}backup_incr_${TIMESTAMP}/'"
+    # Update the modification date of the backup directory immediately after its creation
+    ssh $REMOTE "touch '${DST_DIR}backup_incr_${TIMESTAMP}/'"
 }
 
 # Clean up old backups, keeping only backups from the last N days and
 # ensuring the two most recent backups are retained regardless of age.
 cleanup_old_backups() {
     echo "Cleaning up old backups..."
-    # Remove old backups (full and incremental) based on RETENTION days 
- #   ssh $REMOTE "find ${DST_DIR} -maxdepth 1 -type d -name 'backup_incr_*' -mtime +2${RETENTION}  -exec rm -rf {} \;"
-}
+    # Remove old backups (full and incremental) based on RETENTION days
+    ssh $REMOTE "find $DST_DIR -maxdepth 1 -type d -name 'backup_incr_*' -mtime +$RETENTION -exec rm -rf {} \;"
 
 # Main execution flow
 main() {
