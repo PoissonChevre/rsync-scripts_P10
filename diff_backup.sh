@@ -26,6 +26,7 @@ fi
 # Assign arguments to variables
 TARGET_DIR="$1"
 RETENTION="$2"
+SRC_DIR="/home/$USER/$TARGET_DIR/"
 DST_DIR="/home/$USER/backup_storage/$TARGET_DIR/"
 REMOTE="$USER@backup-srv"
 TIMESTAMP=$(date +%Y%m%d_%H%M)
@@ -43,7 +44,7 @@ find_last_full_backup() {
     if [ -z "$LAST_FULL_BACKUP" ]; then
         # No existing full backup found, force the creation of a new one
         echo "No previous full backup found. Forcing the creation of a new full backup..."
-        rsync "${PARAMETERS[@]}" "$TARGET_DIR" "${REMOTE}:${DST_DIR}backup_FULL_${TIMESTAMP}"
+        rsync "${PARAMETERS[@]}" "$SRC_DIR" "$REMOTE:${DST_DIR}backup_FULL_${TIMESTAMP}"
         LAST_FULL_BACKUP="${DST_DIR}backup_FULL_${TIMESTAMP}"
     else
         echo "Last full backup: $LAST_FULL_BACKUP"
@@ -74,7 +75,7 @@ perform_diff_backup() {
     if is_last_full_backup_old; then
         # Last full backup is older than RETENTION days, create a new full backup
         echo "Last full backup is older than $RETENTION days. Creating a new full backup..."
-        rsync "${PARAMETERS[@]}" "$TARGET_DIR" "${REMOTE}:${DST_DIR}backup_FULL_${TIMESTAMP}"
+        rsync "${PARAMETERS[@]}" "$SRC_DIR" "${REMOTE}:${DST_DIR}backup_FULL_${TIMESTAMP}"
 
         # Remove the previous full backup
         if [ -n "$LAST_FULL_BACKUP" ]; then
@@ -84,7 +85,7 @@ perform_diff_backup() {
     else
         # Differential backup using the most recent full backup as reference
         echo "Performing differential backup using the most recent full backup as reference."
-        rsync "${PARAMETERS[@]}" --link-dest="$LAST_FULL_BACKUP" "$TARGET_DIR" "${REMOTE}:${DST_DIR}backup_diff_${TIMESTAMP}"
+        rsync "${PARAMETERS[@]}" --link-dest="$LAST_FULL_BACKUP" "$SRC_DIR" "${REMOTE}:${DST_DIR}backup_diff_${TIMESTAMP}"
     fi
 }
 
