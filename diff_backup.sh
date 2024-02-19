@@ -8,7 +8,7 @@
 # Description: Performs a differential backup using rsync, keeping backups
 # from the specified number of days and ensuring at least the two most recent
 # backups are always retained.
-# Usage: ./backup_diff.sh <SRC_DIR> <RETENTION>
+# Usage: ./backup_diff.sh <TARGET_DIR> <RETENTION>
 # Example: ./backup_diff.sh MACHINES 2
 # Note: Ensure SSH password-less authentication is set up for rsync_adm@backup-srv.
 #       https://explainshell.com/explain/1/rsync
@@ -19,14 +19,14 @@
 
 # Check for required arguments
 if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 <SRC_DIR> <RETENTION>"
+    echo "Usage: $0 <TARGET_DIR> <RETENTION>"
     exit 1
 fi
 
 # Assign arguments to variables
-SRC_DIR="$1"
+TARGET_DIR="$1"
 RETENTION="$2"
-DST_DIR="/home/$USER/backup_storage/$SRC_DIR/"
+DST_DIR="/home/$USER/backup_storage/$TARGET_DIR/"
 REMOTE="$USER@backup-srv"
 TIMESTAMP=$(date +%Y%m%d_%H%M)
 PARAMETERS=(
@@ -38,13 +38,13 @@ PARAMETERS=(
 
 # Find the last full backup or create one if there is no full backup
 find_last_full_backup() {
-    LAST_FULL_BACKUP=$(ssh $REMOTE "ls -d ${DST_DIR}backup_diff_full_* 2>/dev/null | sort | tail -n 1")
+    LAST_FULL_BACKUP=$(ssh $REMOTE "ls -d ${DST_DIR}backup_FULL_* 2>/dev/null | sort | tail -n 1")
 
     if [ -z "$LAST_FULL_BACKUP" ]; then
         # No existing full backup found, force the creation of a new one
         echo "No previous full backup found. Forcing the creation of a new full backup..."
-        rsync "${PARAMETERS[@]}" "$SRC_DIR" "${REMOTE}:${DST_DIR}backup_diff_FULL_${TIMESTAMP}"
-        LAST_FULL_BACKUP="${DST_DIR}backup_diff_FULL_${TIMESTAMP}"
+        rsync "${PARAMETERS[@]}" "$TARGET_DIR" "${REMOTE}:${DST_DIR}backup_FULL_${TIMESTAMP}"
+        LAST_FULL_BACKUP="${DST_DIR}backup_FULL_${TIMESTAMP}"
     else
         echo "Last full backup: $LAST_FULL_BACKUP"
     fi
@@ -74,7 +74,7 @@ perform_diff_backup() {
     if is_last_full_backup_old; then
         # Last full backup is older than RETENTION days, create a new full backup
         echo "Last full backup is older than $RETENTION days. Creating a new full backup..."
-        rsync "${PARAMETERS[@]}" "$SRC_DIR" "${REMOTE}:${DST_DIR}backup_FULL_${TIMESTAMP}"
+        rsync "${PARAMETERS[@]}" "$TARGET_DIR" "${REMOTE}:${DST_DIR}backup_FULL_${TIMESTAMP}"
 
         # Remove the previous full backup
         if [ -n "$LAST_FULL_BACKUP" ]; then
@@ -84,7 +84,7 @@ perform_diff_backup() {
     else
         # Differential backup using the most recent full backup as reference
         echo "Performing differential backup using the most recent full backup as reference."
-        rsync "${PARAMETERS[@]}" --link-dest="$LAST_FULL_BACKUP" "$SRC_DIR" "${REMOTE}:${DST_DIR}backup_diff_${TIMESTAMP}"
+        rsync "${PARAMETERS[@]}" --link-dest="$LAST_FULL_BACKUP" "$TARGET_DIR" "${REMOTE}:${DST_DIR}backup_diff_${TIMESTAMP}"
     fi
 }
 
