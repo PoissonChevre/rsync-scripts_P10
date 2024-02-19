@@ -36,10 +36,18 @@ PARAMETERS=(
     -e ssh  # ssh remote
 )
 
-# Find the last full backup
+# Find the last full backup or create one if there is no full backup
 find_last_full_backup() {
     LAST_FULL_BACKUP=$(ssh $REMOTE "ls -d ${DST_DIR}backup_diff_full_* 2>/dev/null | sort | tail -n 1")
-    echo "Last full backup: $LAST_FULL_BACKUP"
+
+    if [ -z "$LAST_FULL_BACKUP" ]; then
+        # No existing full backup found, force the creation of a new one
+        echo "No previous full backup found. Forcing the creation of a new full backup..."
+        rsync "${PARAMETERS[@]}" "$SRC_DIR" "${REMOTE}:${DST_DIR}backup_diff_FULL_${TIMESTAMP}"
+        LAST_FULL_BACKUP="${DST_DIR}backup_diff_FULL_${TIMESTAMP}"
+    else
+        echo "Last full backup: $LAST_FULL_BACKUP"
+    fi
 }
 
 # Check if the last full backup is older than the specified RETENTION
