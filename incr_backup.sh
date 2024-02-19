@@ -53,15 +53,15 @@ perform_incr_backup() {
         rsync "${PARAMETERS[@]}" "${SRC_DIR}" "${REMOTE}:${DST_DIR}backup_incr_${TIMESTAMP}"
     fi
     # Mise à jour de la date de modification du répertoire de backup immédiatement après sa création
-    ssh $REMOTE "touch '${DST_DIR}backup_incr_${TIMESTAMP}/'"
+ #   ssh $REMOTE "touch '${DST_DIR}backup_incr_${TIMESTAMP}/'"
 }
 
 # Clean up old backups, keeping only backups from the last N days and
 # ensuring the two most recent backups are retained regardless of age.
 cleanup_old_backups() {
     echo "Cleaning up old backups..."
-    # Remove old backups (full and incremental) based on RETENTION days +2${RETENTION}
-    ssh $REMOTE "find ${DST_DIR} -maxdepth 1 -type d -name 'backup_incr_*' -mmin +5  -exec rm -rf {} \;"
+    # Remove old backups (full and incremental) based on RETENTION days 
+ #   ssh $REMOTE "find ${DST_DIR} -maxdepth 1 -type d -name 'backup_incr_*' -mtime +2${RETENTION}  -exec rm -rf {} \;"
 }
 
 # Main execution flow
