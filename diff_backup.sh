@@ -45,7 +45,7 @@ find_last_full_backup() {
         # No existing full backup found, force the creation of a new one
         echo "No previous full backup found. Forcing the creation of a new full backup..."
         rsync "${PARAMETERS[@]}" "$SRC_DIR" "$REMOTE:${DST_DIR}backup_FULL_${TIMESTAMP}"
-        LAST_FULL_BACKUP="$REMOTE:${DST_DIR}backup_FULL_${TIMESTAMP}"
+        LAST_FULL_BACKUP=$(ssh $REMOTE "ls -d ${DST_DIR}backup_FULL_* 2>/dev/null | sort | tail -n 1")
     else
         echo "Last full backup: $LAST_FULL_BACKUP"
     fi
@@ -54,7 +54,7 @@ find_last_full_backup() {
 # Check if the last full backup is older than the specified RETENTION
 is_last_full_backup_old() {
     if [ -n "$LAST_FULL_BACKUP" ]; then
-        LAST_BACKUP_TIME=$(ssh $REMOTE "stat -c %W ${LAST_FULL_BACKUP}")
+        LAST_BACKUP_TIME=$(ssh $REMOTE "stat -c %W $LAST_FULL_BACKUP")
         CURRENT_TIME=$(date +%s)
         ELAPSED_TIME=$((CURRENT_TIME - LAST_BACKUP_TIME))
         
