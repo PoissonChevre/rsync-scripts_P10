@@ -8,8 +8,8 @@
 # Description: Performs a differential backup using rsync, keeping backups
 # from the specified number of days and ensuring at least the two most recent
 # backups are always retained.
-# Usage: ./backup_script.sh <SRC_DIR> <RETENTION>
-# Example: ./backup_script.sh /path/to/SRC_DIR/ 7
+# Usage: ./backup_diff.sh <SRC_DIR> <RETENTION>
+# Example: ./backup_diff.sh MACHINES 2
 # Note: Ensure SSH password-less authentication is set up for rsync_adm@backup-srv.
 #       https://explainshell.com/explain/1/rsync
 #       dd if=/dev/zero of=/chemin/vers/repertoire/MACHINE/vm-1Go bs=4096 count=262144 (créé un fichier de 1Go de zéros binaires, 262144 x 4Ko)
@@ -26,47 +26,66 @@ fi
 # Assign arguments to variables
 SRC_DIR="$1"
 RETENTION="$2"
-DST_DIR="rsync_adm@backup-srv:~/backup_storage/"
-TIMESTAMP=$(date +%Y%m%d-%a)
+DST_DIR="/home/$USER/backup_storage/$SRC_DIR/"
+REMOTE="$USER@backup-srv"
+TIMESTAMP=$(date +%Y%m%d_%H%M)
 PARAMETERS=(
-    -a                      # --archive, equivalent to -rlptgoD (--recusrsive;--links;--perms;--times;--group;--owner;equivalent to --devices & --specials)
-    -v                      # --verbose
-    -P                      # equivalent to --partial --progress
-    -e ssh                  # ssh remote
+    -a      # --archive, equivalent to -rlptgoD (--recursive;--links;--perms;--times;--group;--owner;equivalent to --devices & --specials)
+    -v      # --verbose
+    -P      # equivalent to --partial --progress
+    -e ssh  # ssh remote
 )
+
+# Find the last full backup
+find_last_full_backup() {
+    LAST_FULL_BACKUP=$(ssh $REMOTE "ls -d ${DST_DIR}backup_diff_full_* 2>/dev/null | sort | tail -n 1")
+    echo "Last full backup: $LAST_FULL_BACKUP"
+}
+
+# Check if the last full backup is older than the specified RETENTION
+is_last_full_backup_old() {
+    if [ -n "$LAST_FULL_BACKUP" ]; then
+        LAST_BACKUP_TIME=$(ssh $REMOTE "stat -c %Y ${LAST_FULL_BACKUP}")
+        CURRENT_TIME=$(date +%s)
+        ELAPSED_TIME=$((CURRENT_TIME - LAST_BACKUP_TIME))
+        
+        if [ "$ELAPSED_TIME" -ge "$((RETENTION * 86400))" ]; then
+            return 0  # Last full backup is older than RETENTION days
+        else
+            return 1  # Last full backup is within the RETENTION days
+        fi
+    fi
+    
+    return 0  # No last full backup found, treat as older than RETENTION days
+}
 
 # Perform a differential backup
 perform_diff_backup() {
-    local LAST_FULL_BACKUP=$(find_last_full_backup)
-    local CURRENT_TIME=$(date +%s)
-    
-    if [ -z "$LAST_FULL_BACKUP" ] || [ $((CURRENT_TIME - $(stat -c %Y "$LAST_FULL_BACKUP"))) -ge $((RETENTION * 86400)) ]; then
-        # No existing full backup or the last full backup is older than RETENTION days
-        echo "No previous full backup found or the last full backup is older than ${RETENTION} days. Creating a new full backup."
-        rsync "${PARAMETERS[*]}" "${SRC_DIR}" "${DST_DIR}backup_diff-FULL-${TIMESTAMP}/"
+    find_last_full_backup
+
+    if is_last_full_backup_old; then
+        # Last full backup is older than RETENTION days, create a new full backup
+        echo "Last full backup is older than $RETENTION days. Creating a new full backup..."
+        rsync "${PARAMETERS[@]}" "$SRC_DIR" "${REMOTE}:${DST_DIR}backup_FULL_${TIMESTAMP}"
 
         # Remove the previous full backup
-        echo "Removing the previous full backup: $LAST_FULL_BACKUP"
-        ssh rsync_adm@backup-srv "rm -rf $LAST_FULL_BACKUP"
+        if [ -n "$LAST_FULL_BACKUP" ]; then
+            echo "Removing the previous full backup: $LAST_FULL_BACKUP"
+            ssh $REMOTE "rm -rf $LAST_FULL_BACKUP"
+        fi
     else
         # Differential backup using the most recent full backup as reference
         echo "Performing differential backup using the most recent full backup as reference."
-        rsync "${PARAMETERS[*]}" --link-dest "${LAST_FULL_BACKUP}" "${SRC_DIR}" "${DST_DIR}backup_diff-${TIMESTAMP}/"
+        rsync "${PARAMETERS[@]}" --link-dest="$LAST_FULL_BACKUP" "$SRC_DIR" "${REMOTE}:${DST_DIR}backup_diff_${TIMESTAMP}"
     fi
 }
 
-# Find the most recent full backup directory
-find_last_full_backup() {
-    ssh rsync_adm@backup-srv "ls -d ${DST_DIR}backup_diff_full-* 2>/dev/null | sort | tail -n 1"
-}
-
 # Clean up old backups, keeping only backups from the last N days and
-# ensuring the two most recent backups are retained regardless of age.
+# ensuring the most recent backups are retained regardless of age.
 cleanup_old_backups() {
     echo "Cleaning up old backups..."
-    
-    # Remove old backups (full and incremental) based on RETENTION days
-    ssh rsync_adm@backup-srv "find ${DST_DIR} -maxdepth 1 \( -name 'backup_diff_full_*' -o -name 'backup_diff_incr_*' \) -mtime +${RETENTION} 2>/dev/null | sort | xargs -r rm -rf"
+    # Remove old backups based on RETENTION days (using ctime for directory change time)
+    ssh $REMOTE "find $DST_DIR -maxdepth 1 -name 'backup_diff_*' -ctime +$RETENTION -exec rm -rf {} \;"
 }
 
 # Main execution flow
