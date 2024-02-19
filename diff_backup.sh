@@ -44,8 +44,8 @@ find_last_full_backup() {
     if [ -z "$LAST_FULL_BACKUP" ]; then
         # No existing full backup found, force the creation of a new one
         echo "No previous full backup found. Forcing the creation of a new full backup..."
-        LAST_FULL_BACKUP=rsync "${PARAMETERS[@]}" "$SRC_DIR" "$REMOTE:${DST_DIR}backup_FULL_${TIMESTAMP}"
-    #    LAST_FULL_BACKUP="${DST_DIR}backup_FULL_${TIMESTAMP}"
+        rsync "${PARAMETERS[@]}" "$SRC_DIR" "$REMOTE:${DST_DIR}backup_FULL_${TIMESTAMP}"
+        LAST_FULL_BACKUP="$REMOTE:${DST_DIR}backup_FULL_${TIMESTAMP}"
     else
         echo "Last full backup: $LAST_FULL_BACKUP"
     fi
