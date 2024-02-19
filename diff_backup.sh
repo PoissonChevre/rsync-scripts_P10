@@ -106,7 +106,6 @@ cleanup_old_backups() {
 # Main execution flow
 main() {
     echo "Starting backup process..."
-    find_last_full_backup
     perform_diff_backup
     cleanup_old_backups
     echo "Backup and cleanup completed."
