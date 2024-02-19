@@ -54,7 +54,7 @@ find_last_full_backup() {
 # Check if the last full backup is older than the specified RETENTION
 is_last_full_backup_old() {
     if [ -n "$LAST_FULL_BACKUP" ]; then
-        LAST_BACKUP_TIME=$(ssh $REMOTE "stat -c %Y ${LAST_FULL_BACKUP}")
+        LAST_BACKUP_TIME=$(ssh $REMOTE "stat -c %W ${LAST_FULL_BACKUP}")
         CURRENT_TIME=$(date +%s)
         ELAPSED_TIME=$((CURRENT_TIME - LAST_BACKUP_TIME))
         
