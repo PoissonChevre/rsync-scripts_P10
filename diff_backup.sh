@@ -125,7 +125,6 @@ cleanup_old_backups() {
 main() {
     echo "Starting backup process..."
     perform_diff_backup
-    cleanup_old_backups
     echo "Backup and cleanup completed."
 }
 
