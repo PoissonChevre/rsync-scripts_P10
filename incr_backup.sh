@@ -23,9 +23,9 @@ fi
 # Assign arguments to variables
 TARGET_DIR="$1"
 RETENTION="$2"
-SRC_DIR="/home/$USER/$TARGET_DIR/"
-DST_DIR="/home/$USER/backup_storage/$TARGET_DIR/"
-REMOTE="$USER@backup-srv"
+SRC_DIR="/home/rsync_adm/$TARGET_DIR/"
+DST_DIR="/home/rsync_adm/backup_storage/$TARGET_DIR/"
+REMOTE="rsync_adm@backup-srv"
 TIMESTAMP=$(date +%Y%m%d_%H%M)
 PARAMETERS=(
     -a      # --archive, equivalent to -rlptgoD (--recursive;--links;--perms;--times;--group;--owner;equivalent to --devices & --specials)
@@ -74,7 +74,6 @@ perform_incr_backup() {
         perform_full_backup
     fi
 }
-
 # Clean up old backups, keeping only backups from the last N days and
 # ensuring the two most recent backups are retained regardless of age.
 cleanup_old_backups() {

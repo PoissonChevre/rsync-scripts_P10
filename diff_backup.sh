@@ -26,9 +26,9 @@ fi
 # Assign arguments to variables
 TARGET_DIR="$1"
 RETENTION="$2"
-SRC_DIR="/home/$USER/$TARGET_DIR/"
-DST_DIR="/home/$USER/backup_storage/$TARGET_DIR/"
-REMOTE="$USER@backup-srv" # USER=rsync_adm
+SRC_DIR="/home/rsync_adm/$TARGET_DIR/"
+DST_DIR="/home/rsync_adm/backup_storage/$TARGET_DIR/"
+REMOTE="rsync_adm@backup-srv" # USER=rsync_adm
 TIMESTAMP=$(date +%Y%m%d_%H%M)
 PARAMETERS=(
     -a              # --archive, equivalent to -rlptgoD (--recursive;--links;--perms;--times;--group;--owner;equivalent to --devices & --specials)
@@ -107,6 +107,7 @@ perform_diff_backup() {
             cleanup_old_full_backups
             cleanup_old_diff_backups
         else
+            cleanup_old_diff_backups
             # Differential backup using the most recent full backup as reference
             echo "Performing differential backup using the most recent full backup as reference."
             rsync "${PARAMETERS[@]}" --link-dest="$LAST_FULL_BACKUP" "$SRC_DIR" "$REMOTE:${DST_DIR}backup_diff_${TIMESTAMP}"
