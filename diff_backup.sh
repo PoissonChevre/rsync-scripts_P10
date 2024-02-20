@@ -30,7 +30,7 @@ SRC_DIR="/home/$USER/$TARGET_DIR/"
 DST_DIR="/home/$USER/backup_storage/$TARGET_DIR/"
 REMOTE="$USER@backup-srv" # USER=rsync_adm
 TIMESTAMP=$(date +%Y%m%d_%H%M)
-#OLD_FULL_BACKUP_TO_REMOVE=false
+OLD_FULL_BACKUP_TO_REMOVE=false
 PARAMETERS=(
     -a              # --archive, equivalent to -rlptgoD (--recursive;--links;--perms;--times;--group;--owner;equivalent to --devices & --specials)
     -v              # --verbose
@@ -67,13 +67,9 @@ is_last_full_backup_old() {
     RETENTION_IN_SECONDS=$((RETENTION * 86400))
     
     if [ "$ELAPSED_TIME" -ge "$RETENTION_IN_SECONDS" ]; then 
-        # Flag to indicate if there is an old full backup to remove (boolean)
-        OLD_FULL_BACKUP_TO_REMOVE=true
         # Last full backup is older than RETENTION days 
         return 0  # 0 = true
     else
-        # Flag to indicate if there is an old full backup to remove (boolean)
-        OLD_FULL_BACKUP_TO_REMOVE=false
         # Last full backup is within the RETENTION days
         return 1  # 1 = false
     fi
@@ -84,15 +80,8 @@ perform_full_backup() {
 
     echo "Creating a new full backup..."
     rsync "${PARAMETERS[@]}" "$SRC_DIR" "$REMOTE:${DST_DIR}backup_FULL_${TIMESTAMP}"
-    if $OLD_FULL_BACKUP_TO_REMOVE; then
-        # Remove the previous old backups
-        cleanup_old_backups
-        # Call the fct to display the directory path of the new full backup 
-        is_full_backup_existing
-    else
-        # Call the fct to display the directory path of the new full backup 
-        is_full_backup_existing
-    fi
+    # Call the fct to display the directory path of the new full backup 
+    is_full_backup_existing
  }
 
 # Perform a differential backup
@@ -103,6 +92,7 @@ perform_diff_backup() {
             # Last full backup is older than RETENTION days, create a new full backup
             echo "Last full backup is older than $RETENTION days." 
             perform_full_backup
+            cleanup_old_backups
         else
             # Differential backup using the most recent full backup as reference
             echo "Performing differential backup using the most recent full backup as reference."
