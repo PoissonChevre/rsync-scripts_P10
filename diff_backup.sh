@@ -51,7 +51,7 @@ find_last_full_backup() {
         # No existing full backup found, force the creation of a new one
         echo "No previous full backup found. Forcing the creation of a new full backup..."
         rsync "${PARAMETERS[@]}" "$SRC_DIR" "$REMOTE:${DST_DIR}backup_FULL_${TIMESTAMP}"
-        # flag to skip differential in the fct perform_diff_backup()
+        # flag to skip differential backup in the fct perform_diff_backup()
         FULL_BACKUP_CREATED=true
     else
         echo "Last full backup: $LAST_FULL_BACKUP"
@@ -76,7 +76,7 @@ is_last_full_backup_old() {
 
 # Perform a differential backup
 perform_diff_backup() {
-    
+
     find_last_full_backup
 
     if $FULL_BACKUP_CREATED; then

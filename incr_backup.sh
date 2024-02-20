@@ -37,14 +37,14 @@ PARAMETERS=(
 )
 
 # Find the last full backup or create one if there is no full backup found
-find_last_full_backup() {
+find_last_backup() {
     LAST_FULL_BACKUP=$(ssh $REMOTE "ls -d ${DST_DIR}backup_FULL_* 2>/dev/null | sort | tail -n 1")
 
     if [ -z "$LAST_FULL_BACKUP" ]; then
-        # No existing full backup found, force the creation of a new one
+        # No existing backup found, force the creation of a new one
         echo "No previous full backup found. Forcing the creation of a new full backup..."
         rsync "${PARAMETERS[@]}" "$SRC_DIR" "$REMOTE:${DST_DIR}backup_incr_${TIMESTAMP}"
-        # flag to skip differential in the fct perform_diff_backup()
+        # flag to skip incremental backup in the fct perform_diff_backup()
         FULL_BACKUP_CREATED=true
     else
         echo "Last full backup: $LAST_FULL_BACKUP"
