@@ -48,11 +48,11 @@ is_full_backup_existing() {
     if [ -n "$LAST_FULL_BACKUP" ]; then
         # Display last full backup path
         echo "Last full backup: $LAST_FULL_BACKUP"
-        return 0
+        return 0 # 0 = true
     else
         # No existing full backup found, we will force the creation of one
         echo "No previous full backup found."
-        return 1
+        return 1 # 1 = false
     fi
 }
 
@@ -65,12 +65,14 @@ is_last_full_backup_old() {
         
     if [ "$ELAPSED_TIME" -ge "$((RETENTION * 86400))" ]; then # 86400= one day =24*3600s
         # Flag to indicate if there is a  old full backup to remove (boolean)
-        OLD_FULL_BACKUP_TO_REMOVE=false
-        return 0  # Last full backup is older than RETENTION days
+        OLD_FULL_BACKUP_TO_REMOVE=true
+        # Last full backup is older than RETENTION days 
+        return 0  # 0 = true
     else
         # Flag to indicate if there is a  old full backup to remove (boolean)
-        OLD_FULL_BACKUP_TO_REMOVE=true
-        return 1  # Last full backup is within the RETENTION days
+        OLD_FULL_BACKUP_TO_REMOVE=false
+        # Last full backup is within the RETENTION days
+        return 1  # 1 = false
     fi
 }
 
