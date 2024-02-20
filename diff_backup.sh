@@ -68,12 +68,12 @@ is_last_full_backup_old() {
         # Flag to indicate if there is a  old full backup to remove (boolean)
         OLD_FULL_BACKUP_TO_REMOVE=true
         # Last full backup is older than RETENTION days 
-        return 1  # 0 = true
+        return 0  # 0 = true
     else
         # Flag to indicate if there is a  old full backup to remove (boolean)
         OLD_FULL_BACKUP_TO_REMOVE=false
         # Last full backup is within the RETENTION days
-        return 0  # 1 = false
+        return 1  # 1 = false
     fi
 }
 
