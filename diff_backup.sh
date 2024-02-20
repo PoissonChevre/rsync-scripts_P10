@@ -30,6 +30,7 @@ SRC_DIR="/home/$USER/$TARGET_DIR/"
 DST_DIR="/home/$USER/backup_storage/$TARGET_DIR/"
 REMOTE="$USER@backup-srv" # USER=rsync_adm
 TIMESTAMP=$(date +%Y%m%d_%H%M)
+OLD_FULL_BACKUP_TO_REMOVE=false
 PARAMETERS=(
     -a              # --archive, equivalent to -rlptgoD (--recursive;--links;--perms;--times;--group;--owner;equivalent to --devices & --specials)
     -v              # --verbose
