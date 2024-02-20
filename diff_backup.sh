@@ -62,16 +62,17 @@ is_last_full_backup_old() {
 
     CURRENT_TIME=$(date +%s)
     LAST_BACKUP_TIME=$(ssh $REMOTE "stat -c %W $LAST_FULL_BACKUP")
-    ELAPSED_TIME=($CURRENT_TIME - $LAST_BACKUP_TIME)
+    ELAPSED_TIME=$((CURRENT_TIME - LAST_BACKUP_TIME))
     # Converting RETENTION in seconds ==> one day =24*3600s=86400s
-    RETENTION_IN_SECONDS=(${RETENTION} * 86400)
+    RETENTION_IN_SECONDS=$((RETENTION * 86400))
+    
     if [ "$ELAPSED_TIME" -ge "$RETENTION_IN_SECONDS" ]; then 
-        # Flag to indicate if there is a  old full backup to remove (boolean)
+        # Flag to indicate if there is an old full backup to remove (boolean)
         OLD_FULL_BACKUP_TO_REMOVE=true
         # Last full backup is older than RETENTION days 
         return 0  # 0 = true
     else
-        # Flag to indicate if there is a  old full backup to remove (boolean)
+        # Flag to indicate if there is an old full backup to remove (boolean)
         OLD_FULL_BACKUP_TO_REMOVE=false
         # Last full backup is within the RETENTION days
         return 1  # 1 = false
