@@ -48,11 +48,11 @@ is_full_backup_existing() {
     if [ -n "$LAST_FULL_BACKUP" ]; then
         # Display last full backup path
         echo "Last full backup: $LAST_FULL_BACKUP"
-        return 1
+        return 0
     else
         # No existing full backup found, we will force the creation of one
         echo "No previous full backup found."
-        return 0
+        return 1
     fi
 }
 
