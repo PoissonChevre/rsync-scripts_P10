@@ -62,7 +62,7 @@ is_last_full_backup_old() {
     local LAST_BACKUP_TIME=$(ssh $REMOTE "stat -c %W $LAST_FULL_BACKUP")
     local ELAPSED_TIME=$((CURRENT_TIME - LAST_BACKUP_TIME))
         
-    if [ "$ELAPSED_TIME" -ge "$((RETENTION * 86400))" ]; then
+    if [ "$ELAPSED_TIME" -ge "$((RETENTION * 86400))" ]; then # 86400= one day =24*3600s
         return 0  # Last full backup is older than RETENTION days
     else
         return 1  # Last full backup is within the RETENTION days
@@ -104,6 +104,7 @@ perform_diff_backup() {
         #  No existing full backup found, force the creation of a new one
         echo "Forcing the creation of a new full backup..."
         perform_full_backup
+    fi
 }
 
 # Clean up old backups, keeping only backups from the last N days and
