@@ -30,7 +30,6 @@ SRC_DIR="/home/$USER/$TARGET_DIR/"
 DST_DIR="/home/$USER/backup_storage/$TARGET_DIR/"
 REMOTE="$USER@backup-srv" # USER=rsync_adm
 TIMESTAMP=$(date +%Y%m%d_%H%M)
-OLD_FULL_BACKUP_TO_REMOVE=false  # Initialisation 
 PARAMETERS=(
     -a              # --archive, equivalent to -rlptgoD (--recursive;--links;--perms;--times;--group;--owner;equivalent to --devices & --specials)
     -v              # --verbose
@@ -49,11 +48,11 @@ is_full_backup_existing() {
     if [ -n "$LAST_FULL_BACKUP" ]; then
         # Display last full backup path
         echo "Last full backup: $LAST_FULL_BACKUP"
-        return 1
+        return true
     else
         # No existing full backup found, we will force the creation of one
         echo "No previous full backup found."
-        return 0
+        return false
     fi
 }
 
@@ -66,12 +65,12 @@ is_last_full_backup_old() {
         
     if [ "$ELAPSED_TIME" -ge "$((RETENTION * 86400))" ]; then # 86400= one day =24*3600s
         # Flag to indicate if there is a  old full backup to remove (boolean)
-        # Last full backup is older than RETENTION days
         OLD_FULL_BACKUP_TO_REMOVE=true
+        return true  # Last full backup is older than RETENTION days
     else
         # Flag to indicate if there is a  old full backup to remove (boolean)
-        # Last full backup is within the RETENTION days
         OLD_FULL_BACKUP_TO_REMOVE=false
+        return false  # Last full backup is within the RETENTION days
     fi
 }
 
@@ -84,6 +83,8 @@ perform_full_backup() {
         # Remove the previous full backup 
         echo "Removing the previous full backup: $LAST_FULL_BACKUP"
         ssh $REMOTE "rm -rf $LAST_FULL_BACKUP"
+    else 
+        return
     fi
     # Call the fct to display the directory path of the new full backup 
     is_full_backup_existing
@@ -93,7 +94,7 @@ perform_full_backup() {
 perform_diff_backup() {
 
     if is_full_backup_existing; then
-        if OLD_FULL_BACKUP_TO_REMOVE; then
+        if is_last_full_backup_old; then
             # Last full backup is older than RETENTION days, create a new full backup
             echo "Last full backup is older than $RETENTION days." 
             perform_full_backup
