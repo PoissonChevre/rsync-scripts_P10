@@ -30,7 +30,7 @@ SRC_DIR="/home/$USER/$TARGET_DIR/"
 DST_DIR="/home/$USER/backup_storage/$TARGET_DIR/"
 REMOTE="$USER@backup-srv" # USER=rsync_adm
 TIMESTAMP=$(date +%Y%m%d_%H%M)
-OLD_FULL_BACKUP_TO_REMOVE=false
+#OLD_FULL_BACKUP_TO_REMOVE=false
 PARAMETERS=(
     -a              # --archive, equivalent to -rlptgoD (--recursive;--links;--perms;--times;--group;--owner;equivalent to --devices & --specials)
     -v              # --verbose
@@ -82,16 +82,18 @@ perform_full_backup() {
 
     echo "Creating a new full backup..."
     rsync "${PARAMETERS[@]}" "$SRC_DIR" "$REMOTE:${DST_DIR}backup_FULL_${TIMESTAMP}"
+
     if $OLD_FULL_BACKUP_TO_REMOVE; then
         # Remove the previous full backup 
         echo "Removing the previous full backup: $LAST_FULL_BACKUP"
         ssh $REMOTE "rm -rf $LAST_FULL_BACKUP"
-    else 
-        return
+        # Call the fct to display the directory path of the new full backup 
+        is_full_backup_existing
+    else
+        # Call the fct to display the directory path of the new full backup 
+        is_full_backup_existing
     fi
-    # Call the fct to display the directory path of the new full backup 
-    is_full_backup_existing
-}
+ }
 
 # Perform a differential backup
 perform_diff_backup() {
