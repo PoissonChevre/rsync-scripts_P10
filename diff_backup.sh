@@ -62,9 +62,9 @@ is_last_full_backup_old() {
 
     CURRENT_TIME=$(date +%s)
     LAST_BACKUP_TIME=$(ssh $REMOTE "stat -c %W $LAST_FULL_BACKUP")
-    ELAPSED_TIME=$((CURRENT_TIME - LAST_BACKUP_TIME))
+    ELAPSED_TIME=($CURRENT_TIME - $LAST_BACKUP_TIME)
     # Converting RETENTION in seconds ==> one day =24*3600s=86400s
-    RETENTION_IN_SECONDS=($RETENTION * 86400)
+    RETENTION_IN_SECONDS=(${RETENTION} * 86400)
     if [ "$ELAPSED_TIME" -ge "$RETENTION_IN_SECONDS" ]; then 
         # Flag to indicate if there is a  old full backup to remove (boolean)
         OLD_FULL_BACKUP_TO_REMOVE=true
@@ -118,8 +118,8 @@ perform_diff_backup() {
 # ensuring the most recent backups are retained regardless of age.
 cleanup_old_backups() {
     echo "Cleaning up old backups..."
-    # Remove old backups based 
-    ssh $REMOTE "find $DST_DIR -maxdepth 1 -name 'backup_diff_*'  -exec rm -rf {} \;"
+    # Remove all old backups based 
+    ssh $REMOTE "find $DST_DIR -maxdepth 1 -name 'backup_*'  -exec rm -rf {} \;"
 }
 
 # Main execution flow
