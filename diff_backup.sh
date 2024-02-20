@@ -82,7 +82,6 @@ perform_full_backup() {
 
     echo "Creating a new full backup..."
     rsync "${PARAMETERS[@]}" "$SRC_DIR" "$REMOTE:${DST_DIR}backup_FULL_${TIMESTAMP}"
-
     if $OLD_FULL_BACKUP_TO_REMOVE; then
         # Remove the previous full backup 
         echo "Removing the previous full backup: $LAST_FULL_BACKUP"
