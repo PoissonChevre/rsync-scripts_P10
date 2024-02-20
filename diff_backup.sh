@@ -13,8 +13,8 @@
 # Note: Ensure SSH password-less authentication is set up for rsync_adm@backup-srv.
 #       https://explainshell.com/explain/1/rsync
 #       dd if=/dev/zero of=/chemin/vers/repertoire/MACHINE/vm-1Go bs=4096 count=262144 (créé un fichier de 1Go de zéros binaires, 262144 x 4Ko)
-#       dd i f=/dev/zero of=/chemin/vers/repertoire/MACHINE/vm-2Go bs=4096 count=524288 (créé un fichier de 2Go de zéros binaires, 524288 x 4Ko)
-#       cat vm-1Go vm-2Go >> vm-3Go (créé un fichier de 3Go de zéros binaires)
+#       dd if=/dev/zero of=~/MACHINES/vm4 bs=4096 count=120000
+#       cat vm1 vm2 >> vm3
 # -----------------------------------------------------------------------------
 
 # Check for required arguments
@@ -42,9 +42,7 @@ PARAMETERS=(
 
 # Find the last full backup or will create one if there is no full backup found
 is_full_backup_existing() {
-
     LAST_FULL_BACKUP=$(ssh $REMOTE "ls -d ${DST_DIR}backup_FULL_* 2>/dev/null | sort | tail -n 1")
-
     if [ -n "$LAST_FULL_BACKUP" ]; then
         # Display last full backup path
         echo "Last full backup: $LAST_FULL_BACKUP"
@@ -58,13 +56,11 @@ is_full_backup_existing() {
 
 # Check if the last full backup is older than the specified RETENTION (return boolean)
 is_last_full_backup_old() {
-
     CURRENT_TIME=$(date +%s)
     LAST_BACKUP_TIME=$(ssh $REMOTE "stat -c %W $LAST_FULL_BACKUP")
     ELAPSED_TIME=$((CURRENT_TIME - LAST_BACKUP_TIME))
     # Converting RETENTION in seconds ==> one day =24*3600s=86400s
     RETENTION_IN_SECONDS=$((RETENTION * 86400))
-    
     if [ "$ELAPSED_TIME" -ge "$RETENTION_IN_SECONDS" ]; then 
         # Last full backup is older than RETENTION days 
         return 0  # 0 = true
@@ -89,7 +85,6 @@ cleanup_old_full_backups() {
 
 # Perform a full backup
 perform_full_backup() {
-
     echo "Creating a new full backup..."
     rsync "${PARAMETERS[@]}" "$SRC_DIR" "$REMOTE:${DST_DIR}backup_FULL_${TIMESTAMP}"
     # Call the fct to display the directory path of the new full backup 
@@ -98,7 +93,6 @@ perform_full_backup() {
 
 # Perform a differential backup
 perform_diff_backup() {
-
     if is_full_backup_existing; then
         if is_last_full_backup_old; then
             # Last full backup is older than RETENTION days, create a new full backup

@@ -38,9 +38,7 @@ PARAMETERS=(
 
 # Find the last  backup or will create one if there is no  backup found
 is_backup_existing() {
-
     LAST_INCR_BACKUP=$(ssh $REMOTE "ls -d ${DST_DIR}backup_incr_* 2>/dev/null | sort | tail -n 1")
-
     if [ -n "$LAST_INCR_BACKUP" ]; then
         # Display last  backup path
         echo "Last incremental backup: $LAST_INCR_BACKUP"
@@ -53,7 +51,6 @@ is_backup_existing() {
 }
 
 perform_full_backup() {
-
     echo "Creating a new full backup..."
     rsync "${PARAMETERS[@]}" "$SRC_DIR" "$REMOTE:${DST_DIR}backup_FULL_${TIMESTAMP}"
     # Call the fct to display the directory path of the new full backup 
@@ -62,12 +59,10 @@ perform_full_backup() {
 
 # Perform an incremental backup
 perform_incr_backup() {
-
     if is_backup_existing; then
             # Differential backup using the most recent backup as reference
             echo "Performing incremental backup using the most recent backup as reference."
             rsync "${PARAMETERS[@]}" --link-dest="$LAST_INCR_BACKUP" "$SRC_DIR" "$REMOTE:${DST_DIR}backup_diff_${TIMESTAMP}"
-         fi
     else
         #  No existing full backup found, forcing the creation of a new one
         echo "Forcing the creation of a new full backup..."
