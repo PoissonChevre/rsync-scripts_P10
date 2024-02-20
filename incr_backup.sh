@@ -30,27 +30,39 @@ TIMESTAMP=$(date +%Y%m%d_%H%M)
 PARAMETERS=(
     -a      # --archive, equivalent to -rlptgoD (--recursive;--links;--perms;--times;--group;--owner;equivalent to --devices & --specials)
     -v      # --verbose
+ #   -q     # --quiet (better with cron) ==> verbose mode for the demo
     -P      # equivalent to --partial --progress
     -e ssh  # ssh remote
+    --log-file=/var/log/rsync/incr_backup.log # path to the log file
 )
 
-# Find the last backup
-find_last_backup() {
-    LAST_BACKUP=$(ssh $REMOTE "ls -d ${DST_DIR}backup_incr_* 2>/dev/null | tail -n 1")
-    echo "Last backup: $LAST_BACKUP"
+# Find the last full backup or create one if there is no full backup found
+find_last_full_backup() {
+    LAST_FULL_BACKUP=$(ssh $REMOTE "ls -d ${DST_DIR}backup_FULL_* 2>/dev/null | sort | tail -n 1")
+
+    if [ -z "$LAST_FULL_BACKUP" ]; then
+        # No existing full backup found, force the creation of a new one
+        echo "No previous full backup found. Forcing the creation of a new full backup..."
+        rsync "${PARAMETERS[@]}" "$SRC_DIR" "$REMOTE:${DST_DIR}backup_incr_${TIMESTAMP}"
+        # flag to skip differential in the fct perform_diff_backup()
+        FULL_BACKUP_CREATED=true
+    else
+        echo "Last full backup: $LAST_FULL_BACKUP"
+    fi
 }
 
 # Perform an incremental backup
 perform_incr_backup() {
+
     find_last_backup
-    # If a previous backup is found, perform an incremental backup
-    if [ -n "$LAST_BACKUP" ]; then
+    
+    if $FULL_BACKUP_CREATED; then
+        # Skip creating a incremental backup if a full backup was just created
+        echo "Skipping incremental backup as a full backup was just created."
+    else
+        # If a previous backup is found, perform an incremental backup
         echo "Performing incremental backup..."
         rsync "${PARAMETERS[@]}" --link-dest "$LAST_BACKUP" "$SRC_DIR" "$REMOTE:${DST_DIR}backup_incr_${TIMESTAMP}"
-    else
-        # If no previous incremental backup is found, perform a full backup
-        echo "No previous incremental backup found. Performing a full backup..."
-        rsync "${PARAMETERS[@]}" "$SRC_DIR" "$REMOTE:${DST_DIR}backup_incr_${TIMESTAMP}"
     fi
 }
 
