@@ -87,7 +87,7 @@ perform_full_backup() {
         echo "Removing the previous full backup: $LAST_FULL_BACKUP"
         ssh $REMOTE "rm -rf $LAST_FULL_BACKUP"
     else 
-        continue
+        return
     fi
     # Call the fct to display the directory path of the new full backup 
     is_full_backup_existing
