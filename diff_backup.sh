@@ -30,7 +30,6 @@ SRC_DIR="/home/$USER/$TARGET_DIR/"
 DST_DIR="/home/$USER/backup_storage/$TARGET_DIR/"
 REMOTE="$USER@backup-srv" # USER=rsync_adm
 TIMESTAMP=$(date +%Y%m%d_%H%M)
-OLD_FULL_BACKUP_TO_REMOVE=false
 PARAMETERS=(
     -a              # --archive, equivalent to -rlptgoD (--recursive;--links;--perms;--times;--group;--owner;equivalent to --devices & --specials)
     -v              # --verbose
@@ -75,6 +74,19 @@ is_last_full_backup_old() {
     fi
 }
 
+# Clean up all differenctial backups
+cleanup_old_diff_backups() {
+    echo "Cleaning up old diff backups..."
+    ssh $REMOTE "find $DST_DIR -maxdepth 1 -name 'backup_diff*'  -exec rm -rf {} \;"
+}
+
+# Clean up old FULL backups
+cleanup_old_full_backups() {
+    echo "Cleaning up old full backups..."
+    # Remove old backups  based on RETENTION days (using ctime for directory change time)
+    ssh $REMOTE "find $DST_DIR -maxdepth 1 -name 'backup_FULL*' -ctime +$RETENTION -exec rm -rf {} \;"
+}
+
 # Perform a full backup
 perform_full_backup() {
 
@@ -92,25 +104,19 @@ perform_diff_backup() {
             # Last full backup is older than RETENTION days, create a new full backup
             echo "Last full backup is older than $RETENTION days." 
             perform_full_backup
-            cleanup_old_backups
+            cleanup_old_full_backups
+            cleanup_old_diff_backups
         else
             # Differential backup using the most recent full backup as reference
             echo "Performing differential backup using the most recent full backup as reference."
             rsync "${PARAMETERS[@]}" --link-dest="$LAST_FULL_BACKUP" "$SRC_DIR" "$REMOTE:${DST_DIR}backup_diff_${TIMESTAMP}"
          fi
     else
-        #  No existing full backup found, force the creation of a new one
+        #  No existing full backup found, forcing the creation of a new one
         echo "Forcing the creation of a new full backup..."
         perform_full_backup
+        cleanup_old_diff_backups
     fi
-}
-
-# Clean up old backups, keeping only backups from the last N days and
-# ensuring the most recent backups are retained regardless of age.
-cleanup_old_backups() {
-    echo "Cleaning up old backups..."
-    # Remove all old backups based 
-    ssh $REMOTE "find $DST_DIR -maxdepth 1 -name 'backup_*'  -exec rm -rf {} \;"
 }
 
 # Main execution flow
