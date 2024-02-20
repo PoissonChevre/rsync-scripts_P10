@@ -83,9 +83,8 @@ perform_full_backup() {
     echo "Creating a new full backup..."
     rsync "${PARAMETERS[@]}" "$SRC_DIR" "$REMOTE:${DST_DIR}backup_FULL_${TIMESTAMP}"
     if $OLD_FULL_BACKUP_TO_REMOVE; then
-        # Remove the previous full backup 
-        echo "Removing the previous full backup: $LAST_FULL_BACKUP"
-        ssh $REMOTE "rm -rf $LAST_FULL_BACKUP"
+        # Remove the previous old backups
+        cleanup_old_backups
         # Call the fct to display the directory path of the new full backup 
         is_full_backup_existing
     else
@@ -117,9 +116,9 @@ perform_diff_backup() {
 # Clean up old backups, keeping only backups from the last N days and
 # ensuring the most recent backups are retained regardless of age.
 cleanup_old_backups() {
-    echo "Cleaning up old differencial backups..."
-    # Remove old backups based on RETENTION days (using ctime for directory change time)
-    ssh $REMOTE "find $DST_DIR -maxdepth 1 -name 'backup_diff_*' -ctime +$RETENTION -exec rm -rf {} \;"
+    echo "Cleaning up old backups..."
+    # Remove old backups based 
+    ssh $REMOTE "find $DST_DIR -maxdepth 1 -name 'backup_diff_*'  -exec rm -rf {} \;"
 }
 
 # Main execution flow
