@@ -94,8 +94,8 @@ perform_full_backup() {
 # Perform a differential backup
 perform_diff_backup() {
     if is_full_backup_existing; then
-        if is_last_full_backup_old; then
-            # Last full backup is older than RETENTION days, create a new full backup
+        # Last full backup is older than RETENTION days or today is Sunday, create a new full backup
+        if is_last_full_backup_old || [ "$(date +%u)" -eq 7 ]; then
             echo "Last full backup is older than $RETENTION days." 
             perform_full_backup
             cleanup_old_full_backups
