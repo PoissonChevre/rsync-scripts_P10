@@ -36,33 +36,42 @@ PARAMETERS=(
     --log-file=/var/log/rsync/incr_backup.log # path to the log file
 )
 
-# Find the last full backup or create one if there is no full backup found
-find_last_backup() {
-    LAST_FULL_BACKUP=$(ssh $REMOTE "ls -d ${DST_DIR}backup_FULL_* 2>/dev/null | sort | tail -n 1")
+# Find the last  backup or will create one if there is no  backup found
+is_backup_existing() {
 
-    if [ -z "$LAST_FULL_BACKUP" ]; then
-        # No existing backup found, force the creation of a new one
-        echo "No previous backup found. Forcing the creation of a new full backup..."
-        rsync "${PARAMETERS[@]}" "$SRC_DIR" "$REMOTE:${DST_DIR}backup_incr_${TIMESTAMP}"
-        # Flag to skip incremental backup in the fct perform_diff_backup()
-        FULL_BACKUP_CREATED=true
+    LAST_INCR_BACKUP=$(ssh $REMOTE "ls -d ${DST_DIR}backup_incr_* 2>/dev/null | sort | tail -n 1")
+
+    if [ -n "$LAST_INCR_BACKUP" ]; then
+        # Display last  backup path
+        echo "Last incremental backup: $LAST_INCR_BACKUP"
+        return 0 # 0 = true
     else
-        echo "Last full backup: $LAST_FULL_BACKUP"
+        # No existing full backup found, we will force the creation of one
+        echo "No previous backup found."
+        return 1 # 1 = false
     fi
 }
+
+perform_full_backup() {
+
+    echo "Creating a new full backup..."
+    rsync "${PARAMETERS[@]}" "$SRC_DIR" "$REMOTE:${DST_DIR}backup_FULL_${TIMESTAMP}"
+    # Call the fct to display the directory path of the new full backup 
+    is_backup_existing
+ }
 
 # Perform an incremental backup
 perform_incr_backup() {
 
-    find_last_backup
-    
-    if $FULL_BACKUP_CREATED; then
-        # Skip creating a incremental backup if a full backup was just created
-        echo "Skipping incremental backup as a full backup was just created."
+    if is_backup_existing; then
+            # Differential backup using the most recent backup as reference
+            echo "Performing incremental backup using the most recent backup as reference."
+            rsync "${PARAMETERS[@]}" --link-dest="$LAST_INCR_BACKUP" "$SRC_DIR" "$REMOTE:${DST_DIR}backup_diff_${TIMESTAMP}"
+         fi
     else
-        # If a previous backup is found, perform an incremental backup
-        echo "Performing incremental backup..."
-        rsync "${PARAMETERS[@]}" --link-dest "$LAST_BACKUP" "$SRC_DIR" "$REMOTE:${DST_DIR}backup_incr_${TIMESTAMP}"
+        #  No existing full backup found, forcing the creation of a new one
+        echo "Forcing the creation of a new full backup..."
+        perform_full_backup
     fi
 }
 

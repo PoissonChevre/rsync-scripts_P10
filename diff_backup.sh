@@ -76,7 +76,7 @@ is_last_full_backup_old() {
 
 # Clean up all differenctial backups
 cleanup_old_diff_backups() {
-    echo "Cleaning up old diff backups..."
+    echo "Cleaning up old diffential backups..."
     ssh $REMOTE "find $DST_DIR -maxdepth 1 -name 'backup_diff*'  -exec rm -rf {} \;"
 }
 
