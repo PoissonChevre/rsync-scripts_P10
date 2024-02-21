@@ -28,7 +28,6 @@ TARGET_DIR_ARR=(
 )
 
 restore_file_subdir() {
-    local SEL_DIRECTORY="$1"
 
     while true; do
         echo "Listing files and subdirectories available for restore in $SEL_DIRECTORY directory: "
@@ -54,7 +53,6 @@ restore_file_subdir() {
 }
 
 restore_directory() {
-    local SELECTED_DIRECTORY="$1"
 
     while true; do
         echo "Listing snapshots available for restore in $SELECTED_DIRECTORY directory: "
@@ -133,7 +131,7 @@ prompt_user_directory_type() {
                 echo "Exiting."
                 exit 0
             fi
-            local SEL_DIRECTORY="${TARGET_DIR_ARR[USER_CHOICE]}"
+            SEL_DIRECTORY="${TARGET_DIR_ARR[USER_CHOICE]}"
             if [ "$SEL_DIRECTORY" == "MACHINES" ]; then
                 restore_directory "$SEL_DIRECTORY"
             else
