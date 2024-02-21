@@ -11,9 +11,7 @@ REMOTE="rsync_adm@backup-srv"
 TIMESTAMP=$(date +%Y%m%d_%H%M)
 PARAMETERS=(
     -a              # archive mode; equals -rlptgoD (no -H,-A,-X)
-    -q
-#    -v              # increase verbosity
-#    -P              # show progress during transfer
+    -q              # --quiet
     -e "ssh"        # use SSH for remote connection
 )
 LOG_FILE_INCR="--log-file=/var/log/rsync/incr_restore.log"
@@ -28,31 +26,25 @@ TARGET_DIR_ARR=(
 )
 
 restore_file_subdir() {
-    local SELECTED_DIRECTORY="$1"
-    while true; do
-        echo "Listing files and subdirectories available for restore in $SEL_DIR directory: "
-        ssh "$REMOTE" "cd $DST_DIR/$SEL_DIR/ && ls -Rlh"
 
-        read -p "Enter the path of the file or subdirectory to restore (e.g., 'file.txt', 'subdirectory/file2.txt', or all 'subdirectory/'): " RESTORE_PATH
-
-        local RESTORE_DIR="$HOMEcd /RESTORE/${SEL_DIR}_$TIMESTAMP"
-        mkdir -p "$RESTORE_DIR"
-
-        rsync -r  "${PARAMETERS[@]}" "$LOG_FILE_INCR" "$REMOTE:$DST_DIR/$SEL_DIR/$RESTORE_PATH" "$RESTORE_DIR/"
-
-        echo "Restoration of '$RESTORE_PATH' from $SEL_DIR to $RESTORE_DIR successful."
-
-        read -p "Do you want to restore another file or subdirectory? [Y]/[N]: " RESTORE_ANOTHER
-
-        if [[ "$RESTORE_ANOTHER" =~ ^[Yy]$ ]]; then
-            continue
-        else
-            prompt_user_directory_type
-        fi
-    done
+    echo "Listing files and subdirectories available for restore in $MATCHING_DIR : "
+    ssh "$REMOTE" "cd $DST_DIR/$SEL_DIR/$MATCHING_DIR/ && ls -R"
+    read -p "Enter the path of the file/subdirectory to restore (e.g., 'file.ext', 'subdirectory/file2.ext', or all 'subdirectory/'): " RESTORE_PATH
+    if rsync -r "${PARAMETERS[@]}" "$LOG_FILE" "$REMOTE:$DST_DIR/$SEL_DIR/$MATCHING_DIR/$RESTORE_PATH" "$RESTORE_DIR"; then
+        echo "Restoration of backup '$MATCHING_DIR' from $SEL_DIR to $RESTORE_DIR successful."
+    else
+        echo "Error: Restoration of backup '$RESTORE_PATH' from $SEL_DIR failed."
+    fi
+    read -p "Do you want to restore another file or subdirectory? [Y]/[N]: " RESTORE_ANOTHER
+    if [[ "$RESTORE_ANOTHER" =~ ^[Yy]$ ]]; then
+        continue
+    else
+        prompt_user_directory_type
+    fi
 }
 
 restore_directory() {
+
     if rsync -r "${PARAMETERS[@]}" "$LOG_FILE" "$REMOTE:$DST_DIR/$SEL_DIR/$MATCHING_DIR/" "$RESTORE_DIR"; then
         echo "Restoration of backup '$MATCHING_DIR' from $SEL_DIR to $RESTORE_DIR successful."
     else
@@ -62,8 +54,9 @@ restore_directory() {
 }
 
 restore_option_prompt() {
+
     while true; do
-        read -p "Do you want to restore a file (F), the entire directory (G), or go back (0)? " RESTORE_OPTION
+        read -p "Do you want to restore a file/subdirectory (F), the entire directory (G), or go back (0)? " RESTORE_OPTION
         case $RESTORE_OPTION in
             "F" | "f")
                 restore_file_subdir
@@ -81,7 +74,8 @@ restore_option_prompt() {
     done
 }
 
-list_backups_mkdir() {
+list_backups() {
+
     echo "Listing snapshots available in $SEL_DIR : "
     ssh "$REMOTE" "cd $DST_DIR/$SEL_DIR/ && ls "
     read -p "Enter the date of the backup to restore (format: YYYYmmdd_HHMM), or enter '0' to go back: " BACKUP_DATE
@@ -122,7 +116,7 @@ prompt_user_directory_type() {
                 else 
                     LOG_FILE="${LOG_FILE_INCR}"
                 fi
-                list_backups_mkdir
+                list_backups
                 restore_option_prompt 
                 valid_choice=true
                 ;;
