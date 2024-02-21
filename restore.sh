@@ -96,7 +96,7 @@ restore_directory() {
 
 restore_option_prompt() {
     while true; do
-        read -p "Do you want to restore a file (F), the entire directory (G), or exit (0)? " RESTORE_OPTION
+        read -p "Do you want to restore a file (F), the entire directory (G), or go back (0)? " RESTORE_OPTION
         case $RESTORE_OPTION in
             "F" | "f")
                 restore_file_subdir
@@ -108,38 +108,48 @@ restore_option_prompt() {
                 prompt_user_directory_type
                 ;;
             *)
-                echo "Invalid choice. Please enter 'F' for file, 'G' for the entire directory, or '0' to exit."
+                echo "Invalid choice. Please enter 'F' for file, 'G' for the entire directory, or '0' to go back."
                 ;;
         esac
     done
 }
 
+list_backups() {
+    local SELECTED_DIRECTORY="$1"
+    echo "Listing snapshots available for restore in $SELECTED_DIRECTORY directory: "
+    ssh "$REMOTE" "cd $DST_DIR/$SELECTED_DIRECTORY/ && ls -d */"
+}
+
 prompt_user_directory_type() {
-    local VALID_CHOICE=false
-    while [ "$VALID_CHOICE" == false ]; do
-        echo "Choose the directory to restore: "
+    local valid_choice=false
+    while [ "$valid_choice" == false ]; do
+        echo "Choose the directory to restore (number 0-6), 0 to EXIT: "
         echo "[0] EXIT"
-        for ((i=0; i<${#TARGET_DIR_ARR[@]}; i++)); do
-            echo "[$((i+1))] ${TARGET_DIR_ARR[i]}"
+        for ((i=0+1; i<${#TARGET_DIR_ARR[@]}; i++)); do
+            echo "[$i] ${TARGET_DIR_ARR[i]}"
         done
 
-        read -p "Enter your choice (0-6), 0 to EXIT: " USER_CHOICE
+        read -p "Enter your choice (0-6): " CHOICE
 
-        if [[ "$USER_CHOICE" =~ ^[0-6]$ ]]; then
-            if [ "$USER_CHOICE" -eq 0 ]; then
-                echo "Exiting."
-                exit 0
-            fi
-            SEL_DIR="${TARGET_DIR_ARR[USER_CHOICE]}"
-            if [ "$SEL_DIR" == "MACHINES" ]; then
-                restore_directory "$SEL_DIR"
-            else
-                restore_option_prompt
-            fi
-            VALID_CHOICE=true
-        else
-            echo "Invalid choice. Please enter a number between 0 and 6."
-        fi
+        case ${CHOICE} in
+            [0-6])
+                if [ "$CHOICE" -eq 0 ]; then
+                    echo "bye"
+                    exit 0
+                fi
+                SEL_DIR="${TARGET_DIR_ARR[$((CHOICE-1))]}"
+                list_backups "$SEL_DIR"
+                if [ "$SEL_DIR" == "MACHINES" ]; then
+                    restore_directory 
+                else
+                    restore_option_prompt
+                fi
+                valid_choice=true
+                ;;
+            *)
+                echo "Invalid choice. Please enter a number between 0 and 6."
+                ;;
+        esac
     done
 }
 
