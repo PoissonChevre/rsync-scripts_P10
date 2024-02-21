@@ -21,16 +21,11 @@ PARAMETERS=(
 #    -v              # --verbose
     -e "ssh"        # use SSH for remote connection
 )
+# different log file for incremental and differential
 LOG_FILE_INCR="--log-file=/var/log/rsync/incr_restore.log"
 LOG_FILE_DIFF="--log-file=/var/log/rsync/diff_restore.log"
-TARGET_DIR_ARR=(
-    "FICHIERS"
-    "MACHINES"
-    "MAILS"
-    "RH"
-    "SITE"
-    "TICKETS"
-)
+# 2D table containing backup directories
+TARGET_DIR_ARR=("FICHIERS" "MACHINES" "MAILS" "RH" "SITE" "TICKETS")
 
 # Function to restore a file or a subdirectory
 restore_file_subdir() {
