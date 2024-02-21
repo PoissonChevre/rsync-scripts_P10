@@ -64,13 +64,6 @@ restore_directory() {
             else
                 echo "Error: Restoration of backup '$MATCHING_DIR' from $SEL_DIR failed."
             fi
-
-            return
-        else
-            echo "Error: No matching backup found for the entered date '$BACKUP_DATE' in $SEL_DIR directory."
-            echo "Restoration canceled."
-            continue
-        fi
     done
 }
 
@@ -129,6 +122,10 @@ prompt_user_directory_type() {
                 RESTORE_DIR="$HOME/RESTORE_$TIMESTAMP/$MATCHING_DIR"
                 if [ -n "$MATCHING_DIR" ]; then
                 mkdir -p "$RESTORE_DIR"
+                else
+                echo "Error: No matching backup found for the entered date '$BACKUP_DATE' in $SEL_DIR directory."
+                echo "Restoration canceled."
+                continue
                 fi
                 restore_option_prompt 
                 valid_choice=true
