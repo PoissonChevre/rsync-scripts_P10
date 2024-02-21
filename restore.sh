@@ -30,17 +30,17 @@ TARGET_DIR_ARR=(
 restore_file_subdir() {
 
     while true; do
-        echo "Listing files and subdirectories available for restore in $SEL_DIRECTORY directory: "
-        ssh "$REMOTE" "cd $DST_DIR/$SEL_DIRECTORY/ && ls -Rlh"
+        echo "Listing files and subdirectories available for restore in $SEL_DIR directory: "
+        ssh "$REMOTE" "cd $DST_DIR/$SEL_DIR/ && ls -Rlh"
 
         read -p "Enter the path of the file or subdirectory to restore (e.g., 'file.txt', 'subdirectory/file2.txt', or all 'subdirectory/'): " RESTORE_PATH
 
-        local DESTINATION_DIR="$HOME/$USER/RESTORE/${SEL_DIRECTORY}_$TIMESTAMP"
+        local DESTINATION_DIR="$HOME/$USER/RESTORE/${SEL_DIR}_$TIMESTAMP"
         mkdir -p "$DESTINATION_DIR"
 
-        rsync -r  "${PARAMETERS[@]}" "$LOG_FILE_INCR" "$REMOTE:$DST_DIR/$SEL_DIRECTORY/$RESTORE_PATH" "$DESTINATION_DIR/"
+        rsync -r  "${PARAMETERS[@]}" "$LOG_FILE_INCR" "$REMOTE:$DST_DIR/$SEL_DIR/$RESTORE_PATH" "$DESTINATION_DIR/"
 
-        echo "Restoration of '$RESTORE_PATH' from $SEL_DIRECTORY to $DESTINATION_DIR successful."
+        echo "Restoration of '$RESTORE_PATH' from $SEL_DIR to $DESTINATION_DIR successful."
 
         read -p "Do you want to restore another file or subdirectory? [Y]/[N]: " RESTORE_ANOTHER
 
@@ -55,8 +55,8 @@ restore_file_subdir() {
 restore_directory() {
 
     while true; do
-        echo "Listing snapshots available for restore in $SELECTED_DIRECTORY directory: "
-        BACKUP_DIRS=$(ssh "$REMOTE" "cd $DST_DIR/$SELECTED_DIRECTORY/ && ls -d */" 2>/dev/null)
+        echo "Listing snapshots available for restore in $SEL_DIR directory: "
+        BACKUP_DIRS=$(ssh "$REMOTE" "cd $DST_DIR/$SEL_DIR/ && ls -d */" 2>/dev/null)
 
         read -p "Enter the date of the backup to restore (format: yyyymmdd_HHMM), or enter '0' to return: " BACKUP_DATE
         if [[ "$BACKUP_DATE" == "0" ]]; then
@@ -74,21 +74,21 @@ restore_directory() {
             mkdir -p "$DESTINATION_DIR"
 
             local LOG_FILE="${LOG_FILE_INCR}"
-            if [ "$SELECTED_DIRECTORY" == "MACHINES" ]; then
+            if [ "$SEL_DIR" == "MACHINES" ]; then
                 LOG_FILE="${LOG_FILE_DIFF}"
             else
                 LOG_FILE="${LOG_FILE_INCR}"
             fi
 
-            if rsync -r "${PARAMETERS[@]}" "$LOG_FILE" "$REMOTE:$DST_DIR/$SELECTED_DIRECTORY/$RESTORE_TARGET" "$DESTINATION_DIR/"; then
-                echo "Restoration of backup '$RESTORE_TARGET' from $SELECTED_DIRECTORY to $DESTINATION_DIR successful."
+            if rsync -r "${PARAMETERS[@]}" "$LOG_FILE" "$REMOTE:$DST_DIR/$SEL_DIR/$RESTORE_TARGET" "$DESTINATION_DIR/"; then
+                echo "Restoration of backup '$RESTORE_TARGET' from $SEL_DIR to $DESTINATION_DIR successful."
             else
-                echo "Error: Restoration of backup '$RESTORE_TARGET' from $SELECTED_DIRECTORY failed."
+                echo "Error: Restoration of backup '$RESTORE_TARGET' from $SEL_DIR failed."
             fi
 
             return
         else
-            echo "Error: No matching backup found for the entered date '$BACKUP_DATE' in $SELECTED_DIRECTORY directory."
+            echo "Error: No matching backup found for the entered date '$BACKUP_DATE' in $SEL_DIR directory."
             echo "Restoration canceled."
             restore_option_prompt
         fi
@@ -131,9 +131,9 @@ prompt_user_directory_type() {
                 echo "Exiting."
                 exit 0
             fi
-            SEL_DIRECTORY="${TARGET_DIR_ARR[USER_CHOICE]}"
-            if [ "$SEL_DIRECTORY" == "MACHINES" ]; then
-                restore_directory "$SEL_DIRECTORY"
+            SEL_DIR="${TARGET_DIR_ARR[USER_CHOICE]}"
+            if [ "$SEL_DIR" == "MACHINES" ]; then
+                restore_directory "$SEL_DIR"
             else
                 restore_option_prompt
             fi
