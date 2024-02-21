@@ -47,7 +47,7 @@ restore_file_subdir() {
         if [[ "$RESTORE_ANOTHER" =~ ^[Yy]$ ]]; then
             continue
         else
-            restore_option_prompt
+            prompt_user_directory_type
         fi
     done
 }
@@ -56,12 +56,11 @@ restore_directory() {
 
     while true; do
         echo "Listing snapshots available for restore in $SEL_DIR directory: "
-        BACKUP_DIRS=$(ssh "$REMOTE" "cd $DST_DIR/$SEL_DIR/ && ls -d */" 2>/dev/null)
+        ssh "$REMOTE" "cd $DST_DIR/$SEL_DIR/ && ls -d */"
 
-        read -p "Enter the date of the backup to restore (format: yyyymmdd_HHMM), or enter '0' to return: " BACKUP_DATE
+        read -p "Enter the date of the backup to restore (format: yyyymmdd_HHMM), or enter '0' to go back: " BACKUP_DATE
         if [[ "$BACKUP_DATE" == "0" ]]; then
-            echo "Returning to the main directory selection prompt."
-            return
+            prompt_user_directory_type
         fi
 
         MATCHING_DIRS=$(echo "$BACKUP_DIRS" | grep -o "_${BACKUP_DATE}/")
@@ -90,7 +89,7 @@ restore_directory() {
         else
             echo "Error: No matching backup found for the entered date '$BACKUP_DATE' in $SEL_DIR directory."
             echo "Restoration canceled."
-            restore_option_prompt
+            prompt_user_directory_type
         fi
     done
 }
@@ -135,7 +134,7 @@ prompt_user_directory_type() {
             if [ "$SEL_DIR" == "MACHINES" ]; then
                 restore_directory "$SEL_DIR"
             else
-                restore_option_prompt
+                prompt_user_directory_type
             fi
             VALID_CHOICE=true
         else
