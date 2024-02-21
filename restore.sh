@@ -62,7 +62,7 @@ restore_directory() {
 # Function to prompt user for file or directory restoration option
 restore_option_prompt() {
     while true; do
-        read -p "Do you want to restore a file/subdirectory (F), the entire directory (G), or go back (0)? " RESTORE_OPTION
+        read -p "Do you want to restore a file/subdirectory [F], the entire directory [G], or go back [0]? " RESTORE_OPTION
         case $RESTORE_OPTION in
             "F" | "f")
                 restore_file_subdir
@@ -84,7 +84,7 @@ restore_option_prompt() {
 list_backups() {
     echo "Listing snapshots available in $SEL_DIR : "
     ssh "$REMOTE" "cd $DST_DIR/$SEL_DIR/ && ls "
-    read -p "Enter the date of the backup to restore (format: YYYYmmdd_HHMM), or enter '0' to go back: " BACKUP_DATE
+    read -p "Enter the date of the backup to restore (format) [YYYYmmdd_HHMM], or enter [0] to go back: " BACKUP_DATE
 
     # Check if the user wants to go back to the main directory selection
     if [[ "$BACKUP_DATE" == "0" ]]; then
@@ -109,7 +109,6 @@ prompt_user_directory_type() {
     local valid_choice=false
     while [ "$valid_choice" == false ]; do
         echo "Choose a directory to restore: "
-        echo "[0] EXIT"
         for ((i=0; i<${#TARGET_DIR_ARR[@]}; i++)); do
             echo "[$((i+1))] ${TARGET_DIR_ARR[i]}"
         done
