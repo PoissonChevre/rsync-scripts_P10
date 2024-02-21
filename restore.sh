@@ -11,8 +11,9 @@ REMOTE="rsync_adm@backup-srv"
 TIMESTAMP=$(date +%Y%m%d_%H%M)
 PARAMETERS=(
     -a              # archive mode; equals -rlptgoD (no -H,-A,-X)
-    -v              # increase verbosity
-    -P              # show progress during transfer
+    -q
+#    -v              # increase verbosity
+#    -P              # show progress during transfer
     -e "ssh"        # use SSH for remote connection
 )
 LOG_FILE_INCR="--log-file=/var/log/rsync/incr_restore.log"
@@ -34,7 +35,7 @@ restore_file_subdir() {
 
         read -p "Enter the path of the file or subdirectory to restore (e.g., 'file.txt', 'subdirectory/file2.txt', or all 'subdirectory/'): " RESTORE_PATH
 
-        local DESTINATION_DIR="$HOME/$USER/RESTORE/${SEL_DIR}_$TIMESTAMP"
+        local DESTINATION_DIR="$HOMEcd /RESTORE/${SEL_DIR}_$TIMESTAMP"
         mkdir -p "$DESTINATION_DIR"
 
         rsync -r  "${PARAMETERS[@]}" "$LOG_FILE_INCR" "$REMOTE:$DST_DIR/$SEL_DIR/$RESTORE_PATH" "$DESTINATION_DIR/"
@@ -52,7 +53,7 @@ restore_file_subdir() {
 }
 
 restore_directory() {
-    local SELECTED_DIRECTORY="$1"
+ #   local SELECTED_DIRECTORY="$1"
     while true; do
 
         read -p "Enter the date of the backup to restore (format: yyyymmdd_HHMM), or enter '0' to go back: " BACKUP_DATE
@@ -62,12 +63,11 @@ restore_directory() {
         MATCHING_DIR=$(ssh "$REMOTE" "ls "$DST_DIR/$SEL_DIR/" | grep "$BACKUP_DATE"")
         if [ -n "$MATCHING_DIR" ]; then
             echo "Matching backup for the entered date: $MATCHING_DIR"
-            local DESTINATION_DIR="$HOME/$USER/RESTORE_$MATCHING_DIR"
+            local DESTINATION_DIR="$HOME/RESTORE/$MATCHING_DIR"
             local LOG_FILE="${LOG_FILE_INCR}"
             if [ "$SEL_DIR" == "MACHINES" ]; then
                 LOG_FILE="${LOG_FILE_DIFF}"
             fi
-
             if rsync -r "${PARAMETERS[@]}" "$LOG_FILE" "$REMOTE:$DST_DIR/$SEL_DIR/$MATCHING_DIR" "$DESTINATION_DIR"; then
                 echo "Restoration of backup '$MATCHING_DIR' from $SEL_DIR to $DESTINATION_DIR successful."
             else
@@ -78,7 +78,7 @@ restore_directory() {
         else
             echo "Error: No matching backup found for the entered date '$BACKUP_DATE' in $SEL_DIR directory."
             echo "Restoration canceled."
-            prompt_user_directory_type
+            continue
         fi
     done
 }
