@@ -53,7 +53,7 @@ restore_file_subdir() {
 }
 
 restore_directory() {
-    if rsync -r "${PARAMETERS[@]}" "$LOG_FILE" "$REMOTE:$DST_DIR/$SEL_DIR/$MATCHING_DIR" "$RESTORE_DIR"; then
+    if rsync -r "${PARAMETERS[@]}" "$LOG_FILE" "$REMOTE:$DST_DIR/$SEL_DIR/$MATCHING_DIR/" "$RESTORE_DIR"; then
         echo "Restoration of backup '$MATCHING_DIR' from $SEL_DIR to $RESTORE_DIR successful."
     else
         echo "Error: Restoration of backup '$MATCHING_DIR' from $SEL_DIR failed."
@@ -84,7 +84,7 @@ restore_option_prompt() {
 list_backups_mkdir() {
     echo "Listing snapshots available in $SEL_DIR : "
     ssh "$REMOTE" "cd $DST_DIR/$SEL_DIR/ && ls "
-    read -p "Enter the date of the backup to restore (format: yyyymmdd_HHMM), or enter '0' to go back: " BACKUP_DATE
+    read -p "Enter the date of the backup to restore (format: YYYYmmdd_HHMM), or enter '0' to go back: " BACKUP_DATE
     if [[ "$BACKUP_DATE" == "0" ]]; then
         return
     fi
@@ -92,7 +92,6 @@ list_backups_mkdir() {
     if [ -n "$MATCHING_DIR" ]; then
         echo "Matching backup for the entered date: $MATCHING_DIR"
         RESTORE_DIR="$HOME/RESTORE/$MATCHING_DIR"
-#        mkdir -p "$RESTORE_DIR"
     else
         echo "Error: No matching backup found for the entered date '$BACKUP_DATE' in $SEL_DIR directory."
         echo "Restoration canceled."
