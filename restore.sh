@@ -53,18 +53,13 @@ restore_file_subdir() {
 }
 
 restore_directory() {
- #   local SELECTED_DIRECTORY="$1"
-    while true; do
-            local LOG_FILE="${LOG_FILE_INCR}"
-            if [ "$SEL_DIR" == "MACHINES" ]; then
-                LOG_FILE="${LOG_FILE_DIFF}"
-            fi
-            if rsync -r "${PARAMETERS[@]}" "$LOG_FILE" "$REMOTE:$DST_DIR/$SEL_DIR/$MATCHING_DIR" "$RESTORE_DIR"; then
-                echo "Restoration of backup '$MATCHING_DIR' from $SEL_DIR to $RESTORE_DIR successful."
-            else
-                echo "Error: Restoration of backup '$MATCHING_DIR' from $SEL_DIR failed."
-            fi
-    done
+    if rsync -r "${PARAMETERS[@]}" "$LOG_FILE" "$REMOTE:$DST_DIR/$SEL_DIR/$MATCHING_DIR" "$RESTORE_DIR"; then
+        echo "Restoration of backup '$MATCHING_DIR' from $SEL_DIR to $RESTORE_DIR successful."
+    else
+        echo "Error: Restoration of backup '$MATCHING_DIR' from $SEL_DIR failed."
+    fi
+    return
+    
 }
 
 restore_option_prompt() {
@@ -88,10 +83,24 @@ restore_option_prompt() {
     done
 }
 
-list_backups() {
+list_backups_mkdir() {
 #    local SELECTED_DIRECTORY="$1"
-    echo "Listing snapshots available for restore in $SELECTED_DIRECTORY directory: "
+    echo "Listing snapshots available for restore in $SEL_DIR directory: "
     ssh "$REMOTE" "cd $DST_DIR/$SEL_DIR/ && ls "
+    read -p "Enter the date of the backup to restore (format: yyyymmdd_HHMM), or enter '0' to go back: " BACKUP_DATE
+    if [[ "$BACKUP_DATE" == "0" ]]; then
+        return
+    fi
+    MATCHING_DIR=$(ssh "$REMOTE" "ls "$DST_DIR/$SEL_DIR/" | grep "$BACKUP_DATE"")
+    echo "Matching backup for the entered date: $MATCHING_DIR"
+    RESTORE_DIR="$HOME/RESTORE_$TIMESTAMP/$MATCHING_DIR"
+    if [ -n "$MATCHING_DIR" ]; then
+        mkdir -p "$RESTORE_DIR"
+    else
+        echo "Error: No matching backup found for the entered date '$BACKUP_DATE' in $SEL_DIR directory."
+        echo "Restoration canceled."
+    continue
+    fi
 }
 
 prompt_user_directory_type() {
@@ -112,21 +121,12 @@ prompt_user_directory_type() {
                 ;;
             [1-6])
                 SEL_DIR="${TARGET_DIR_ARR[$((CHOICE-1))]}"
-                list_backups 
-                read -p "Enter the date of the backup to restore (format: yyyymmdd_HHMM), or enter '0' to go back: " BACKUP_DATE
-                if [[ "$BACKUP_DATE" == "0" ]]; then
-                return
+                if [ "$SEL_DIR" == "MACHINES" ]; then
+                    LOG_FILE="${LOG_FILE_DIFF}"
+                else 
+                    LOG_FILE="${LOG_FILE_INCR}"
                 fi
-                MATCHING_DIR=$(ssh "$REMOTE" "ls "$DST_DIR/$SEL_DIR/" | grep "$BACKUP_DATE"")
-                echo "Matching backup for the entered date: $MATCHING_DIR"
-                RESTORE_DIR="$HOME/RESTORE_$TIMESTAMP/$MATCHING_DIR"
-                if [ -n "$MATCHING_DIR" ]; then
-                mkdir -p "$RESTORE_DIR"
-                else
-                echo "Error: No matching backup found for the entered date '$BACKUP_DATE' in $SEL_DIR directory."
-                echo "Restoration canceled."
-                continue
-                fi
+                list_backups_mkdir
                 restore_option_prompt 
                 valid_choice=true
                 ;;
