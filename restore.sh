@@ -48,7 +48,7 @@ restore_file_subdir() {
         if [[ "$RESTORE_ANOTHER" =~ ^[Yy]$ ]]; then
             continue
         else
-            return
+            restore_option_prompt
         fi
     done
 }
@@ -92,7 +92,7 @@ restore_directory() {
         else
             echo "Error: No matching backup found for the entered date '$BACKUP_DATE' in $SELECTED_DIRECTORY directory."
             echo "Restoration canceled."
-            return
+            restore_option_prompt
         fi
     done
 }
@@ -121,7 +121,7 @@ restore_option_prompt() {
 prompt_user_directory_type() {
     local VALID_CHOICE=false
     while [ "$VALID_CHOICE" == false ]; do
-        echo "Choose the directory to restore (number 0-6), 0 to EXIT: "
+        echo "Choose the directory to restore (number 0-5), 0 to EXIT: "
         echo "[0] EXIT"
         for ((i=0; i<${#TARGET_DIR_ARR[@]}; i++)); do
             echo "[$i] ${TARGET_DIR_ARR[i]}"
