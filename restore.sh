@@ -62,7 +62,6 @@ restore_directory() {
 }
 
 restore_option_prompt() {
-#    local SELECTED_DIRECTORY="$1"
     while true; do
         read -p "Do you want to restore a file (F), the entire directory (G), or go back (0)? " RESTORE_OPTION
         case $RESTORE_OPTION in
@@ -83,18 +82,17 @@ restore_option_prompt() {
 }
 
 list_backups_mkdir() {
-#    local SELECTED_DIRECTORY="$1"
-    echo "Listing snapshots available for restore in $SEL_DIR directory: "
+    echo "Listing snapshots available in $SEL_DIR : "
     ssh "$REMOTE" "cd $DST_DIR/$SEL_DIR/ && ls "
     read -p "Enter the date of the backup to restore (format: yyyymmdd_HHMM), or enter '0' to go back: " BACKUP_DATE
     if [[ "$BACKUP_DATE" == "0" ]]; then
         return
     fi
     MATCHING_DIR=$(ssh "$REMOTE" "ls "$DST_DIR/$SEL_DIR/" | grep "$BACKUP_DATE"")
-    echo "Matching backup for the entered date: $MATCHING_DIR"
-    RESTORE_DIR="$HOME/RESTORE_$TIMESTAMP/$MATCHING_DIR"
     if [ -n "$MATCHING_DIR" ]; then
-        mkdir -p "$RESTORE_DIR"
+        echo "Matching backup for the entered date: $MATCHING_DIR"
+        RESTORE_DIR="$HOME/RESTORE/$MATCHING_DIR"
+#        mkdir -p "$RESTORE_DIR"
     else
         echo "Error: No matching backup found for the entered date '$BACKUP_DATE' in $SEL_DIR directory."
         echo "Restoration canceled."
