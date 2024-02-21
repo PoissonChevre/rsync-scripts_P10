@@ -93,11 +93,11 @@ list_backups() {
     if [ -n "$MATCHING_DIR" ]; then
         echo "Matching backup for the entered date: $MATCHING_DIR"
         RESTORE_DIR="$HOME/RESTORE/${SEL_DIR}_$MATCHING_DIR"
-        mkdir -p "$HOME/RESTORE/"
+        mkdir -p "$HOME/RESTORE/" 
     else
         echo "Error: No matching backup found for the entered date '$BACKUP_DATE' in $SEL_DIR directory."
         echo "Restoration canceled."
-        continue
+        return
     fi
 }
 
