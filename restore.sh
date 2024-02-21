@@ -134,7 +134,7 @@ prompt_user_directory_type() {
             if [ "$SEL_DIR" == "MACHINES" ]; then
                 restore_directory "$SEL_DIR"
             else
-                prompt_user_directory_type
+                restore_option_prompt
             fi
             VALID_CHOICE=true
         else
