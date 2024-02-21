@@ -121,13 +121,13 @@ restore_option_prompt() {
 prompt_user_directory_type() {
     local VALID_CHOICE=false
     while [ "$VALID_CHOICE" == false ]; do
-        echo "Choose the directory to restore (number 0-5), 0 to EXIT: "
+        echo "Choose the directory to restore: "
         echo "[0] EXIT"
-        for ((i=0; i<${#TARGET_DIR_ARR[@]}; i++)); do
+        for ((i=0+1; i<${#TARGET_DIR_ARR[@]}; i++)); do
             echo "[$i] ${TARGET_DIR_ARR[i]}"
         done
 
-        read -p "Enter your choice (0-6): " USER_CHOICE
+        read -p "Enter your choice (0-6), 0 to EXIT: " USER_CHOICE
 
         if [[ "$USER_CHOICE" =~ ^[0-6]$ ]]; then
             if [ "$USER_CHOICE" -eq 0 ]; then
