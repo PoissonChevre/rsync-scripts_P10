@@ -56,7 +56,7 @@ restore_directory() {
 
     while true; do
         echo "Listing snapshots available for restore in $SEL_DIR directory: "
-        ssh "$REMOTE" "cd $DST_DIR/$SEL_DIR/ && ls -d */"
+        ssh "$REMOTE" "cd $DST_DIR/$SEL_DIR/ && ls -d"
 
         read -p "Enter the date of the backup to restore (format: yyyymmdd_HHMM), or enter '0' to go back: " BACKUP_DATE
         if [[ "$BACKUP_DATE" == "0" ]]; then
