@@ -108,8 +108,7 @@ restore_option_prompt() {
                 restore_directory
                 ;;
             "0")
-                echo "Exiting."
-                exit 0
+                prompt_user_directory_type
                 ;;
             *)
                 echo "Invalid choice. Please enter 'F' for file, 'G' for the entire directory, or '0' to exit."
