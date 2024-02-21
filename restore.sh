@@ -37,7 +37,7 @@ restore_file_subdir() {
     if rsync -r "${PARAMETERS[@]}" "$LOG_FILE" "$REMOTE:$DST_DIR/$SEL_DIR/$MATCHING_DIR/$RESTORE_PATH" "$RESTORE_DIR"; then
         echo "Restoration of backup '$RESTORE_PATH' from $MATCHING_DIR to $RESTORE_DIR successful."
     else
-        echo "Error: Restoration of backup '$RESTORE_PATH' from $SEL_DIR failed."
+        echo "Error: Restoration of backup '$RESTORE_PATH' from $MATCHING_DIR failed."
     fi
 
     read -p "Do you want to restore another file or subdirectory? [Y]/[N]: " RESTORE_ANOTHER
@@ -71,7 +71,7 @@ restore_option_prompt() {
                 restore_directory
                 ;;
             "0")
-                prompt_user_directory_type
+                return
                 ;;
             *)
                 echo "Invalid choice. Please enter 'F' for file, 'G' for the entire directory, or '0' to go back."
@@ -88,7 +88,7 @@ list_backups() {
 
     # Check if the user wants to go back to the main directory selection
     if [[ "$BACKUP_DATE" == "0" ]]; then
-        return
+        prompt_user_directory_type
     fi
 
     # Find matching backup directory
