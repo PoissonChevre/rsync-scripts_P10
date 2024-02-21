@@ -123,8 +123,8 @@ prompt_user_directory_type() {
     while [ "$VALID_CHOICE" == false ]; do
         echo "Choose the directory to restore: "
         echo "[0] EXIT"
-        for ((i=0+1; i<${#TARGET_DIR_ARR[@]}; i++)); do
-            echo "[$i] ${TARGET_DIR_ARR[i]}"
+        for ((i=0; i<${#TARGET_DIR_ARR[@]}; i++)); do
+            echo "[$(i+1)] ${TARGET_DIR_ARR[i]}"
         done
 
         read -p "Enter your choice (0-6), 0 to EXIT: " USER_CHOICE
