@@ -8,7 +8,6 @@
 
 DST_DIR="/home/rsync_adm/backup_storage"
 REMOTE="rsync_adm@backup-srv"
-TIMESTAMP=$(date +%Y%m%d_%H%M)
 PARAMETERS=(
     -a              # archive mode; equals -rlptgoD (no -H,-A,-X)
     -q              # --quiet
@@ -31,7 +30,7 @@ restore_file_subdir() {
     ssh "$REMOTE" "cd $DST_DIR/$SEL_DIR/$MATCHING_DIR/ && ls -R"
     read -p "Enter the path of the file/subdirectory to restore (e.g., 'file.ext', 'subdirectory/file2.ext', or all 'subdirectory/'): " RESTORE_PATH
     if rsync -r "${PARAMETERS[@]}" "$LOG_FILE" "$REMOTE:$DST_DIR/$SEL_DIR/$MATCHING_DIR/$RESTORE_PATH" "$RESTORE_DIR"; then
-        echo "Restoration of backup '$MATCHING_DIR' from $SEL_DIR to $RESTORE_DIR successful."
+        echo "Restoration of backup '$RESTORE_PATH' from $MATCHING_DIR to $RESTORE_DIR successful."
     else
         echo "Error: Restoration of backup '$RESTORE_PATH' from $SEL_DIR failed."
     fi
@@ -85,7 +84,8 @@ list_backups() {
     MATCHING_DIR=$(ssh "$REMOTE" "ls "$DST_DIR/$SEL_DIR/" | grep "$BACKUP_DATE"")
     if [ -n "$MATCHING_DIR" ]; then
         echo "Matching backup for the entered date: $MATCHING_DIR"
-        RESTORE_DIR="$HOME/RESTORE/$MATCHING_DIR"
+        RESTORE_DIR="$HOME/RESTORE/$SEL_DIR_$MATCHING_DIR"
+        mkdir -p "$HOME/RESTORE/"
     else
         echo "Error: No matching backup found for the entered date '$BACKUP_DATE' in $SEL_DIR directory."
         echo "Restoration canceled."
