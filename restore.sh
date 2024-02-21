@@ -27,7 +27,7 @@ TARGET_DIR_ARR=(
 )
 
 restore_file_subdir() {
-
+    local SELECTED_DIRECTORY="$1"
     while true; do
         echo "Listing files and subdirectories available for restore in $SEL_DIR directory: "
         ssh "$REMOTE" "cd $DST_DIR/$SEL_DIR/ && ls -Rlh"
@@ -52,36 +52,26 @@ restore_file_subdir() {
 }
 
 restore_directory() {
-
+    local SELECTED_DIRECTORY="$1"
     while true; do
-        echo "Listing snapshots available for restore in $SEL_DIR directory: "
-        ssh "$REMOTE" "cd $DST_DIR/$SEL_DIR/ && ls -d"
 
         read -p "Enter the date of the backup to restore (format: yyyymmdd_HHMM), or enter '0' to go back: " BACKUP_DATE
         if [[ "$BACKUP_DATE" == "0" ]]; then
             prompt_user_directory_type
         fi
-
-        MATCHING_DIRS=$(echo "$BACKUP_DIRS" | grep -o "_${BACKUP_DATE}/")
-        if [ -n "$MATCHING_DIRS" ]; then
-            echo "Matching backups for the entered date:"
-            echo "$MATCHING_DIRS"
-            RESTORE_TARGET=$(echo "$MATCHING_DIRS" | head -n 1)
-
-            local DESTINATION_DIR="$HOME/$USER/RESTORE_${RESTORE_TARGET}"
-            mkdir -p "$DESTINATION_DIR"
-
+        MATCHING_DIR=$(ssh "$REMOTE" "ls "$DST_DIR/$SEL_DIR/" | grep "$BACKUP_DATE"")
+        if [ -n "$MATCHING_DIR" ]; then
+            echo "Matching backup for the entered date: $MATCHING_DIR"
+            local DESTINATION_DIR="$HOME/$USER/RESTORE_$MATCHING_DIR"
             local LOG_FILE="${LOG_FILE_INCR}"
             if [ "$SEL_DIR" == "MACHINES" ]; then
                 LOG_FILE="${LOG_FILE_DIFF}"
-            else
-                LOG_FILE="${LOG_FILE_INCR}"
             fi
 
-            if rsync -r "${PARAMETERS[@]}" "$LOG_FILE" "$REMOTE:$DST_DIR/$SEL_DIR/$RESTORE_TARGET" "$DESTINATION_DIR/"; then
-                echo "Restoration of backup '$RESTORE_TARGET' from $SEL_DIR to $DESTINATION_DIR successful."
+            if rsync -r "${PARAMETERS[@]}" "$LOG_FILE" "$REMOTE:$DST_DIR/$SEL_DIR/$MATCHING_DIR" "$DESTINATION_DIR"; then
+                echo "Restoration of backup '$MATCHING_DIR' from $SEL_DIR to $DESTINATION_DIR successful."
             else
-                echo "Error: Restoration of backup '$RESTORE_TARGET' from $SEL_DIR failed."
+                echo "Error: Restoration of backup '$MATCHING_DIR' from $SEL_DIR failed."
             fi
 
             return
@@ -94,6 +84,7 @@ restore_directory() {
 }
 
 restore_option_prompt() {
+    local SELECTED_DIRECTORY="$1"
     while true; do
         read -p "Do you want to restore a file (F), the entire directory (G), or go back (0)? " RESTORE_OPTION
         case $RESTORE_OPTION in
@@ -116,7 +107,7 @@ restore_option_prompt() {
 list_backups() {
     local SELECTED_DIRECTORY="$1"
     echo "Listing snapshots available for restore in $SELECTED_DIRECTORY directory: "
-    ssh "$REMOTE" "cd $DST_DIR/$SELECTED_DIRECTORY/ && ls "
+    ssh "$REMOTE" "cd $DST_DIR/$SELECTED_DIRECTORY/ && ls -d"
 }
 
 prompt_user_directory_type() {
@@ -124,8 +115,8 @@ prompt_user_directory_type() {
     while [ "$valid_choice" == false ]; do
         echo "Choose the directory to restore (number 0-6), 0 to EXIT: "
         echo "[0] EXIT"
-        for ((i=0+1; i<${#TARGET_DIR_ARR[@]}; i++)); do
-            echo "[$i] ${TARGET_DIR_ARR[i]}"
+        for ((i=0; i<${#TARGET_DIR_ARR[@]}; i++)); do
+            echo "[$((i+1))] ${TARGET_DIR_ARR[i]}"
         done
 
         read -p "Enter your choice (0-6): " CHOICE
@@ -139,9 +130,9 @@ prompt_user_directory_type() {
                 SEL_DIR="${TARGET_DIR_ARR[$((CHOICE-1))]}"
                 list_backups "$SEL_DIR"
                 if [ "$SEL_DIR" == "MACHINES" ]; then
-                    restore_directory 
+                    restore_directory "$SEL_DIR"
                 else
-                    restore_option_prompt
+                    restore_option_prompt "$SEL_DIR"
                 fi
                 valid_choice=true
                 ;;
