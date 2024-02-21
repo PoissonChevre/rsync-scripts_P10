@@ -35,12 +35,12 @@ restore_file_subdir() {
 
         read -p "Enter the path of the file or subdirectory to restore (e.g., 'file.txt', 'subdirectory/file2.txt', or all 'subdirectory/'): " RESTORE_PATH
 
-        local DESTINATION_DIR="$HOMEcd /RESTORE/${SEL_DIR}_$TIMESTAMP"
-        mkdir -p "$DESTINATION_DIR"
+        local RESTORE_DIR="$HOMEcd /RESTORE/${SEL_DIR}_$TIMESTAMP"
+        mkdir -p "$RESTORE_DIR"
 
-        rsync -r  "${PARAMETERS[@]}" "$LOG_FILE_INCR" "$REMOTE:$DST_DIR/$SEL_DIR/$RESTORE_PATH" "$DESTINATION_DIR/"
+        rsync -r  "${PARAMETERS[@]}" "$LOG_FILE_INCR" "$REMOTE:$DST_DIR/$SEL_DIR/$RESTORE_PATH" "$RESTORE_DIR/"
 
-        echo "Restoration of '$RESTORE_PATH' from $SEL_DIR to $DESTINATION_DIR successful."
+        echo "Restoration of '$RESTORE_PATH' from $SEL_DIR to $RESTORE_DIR successful."
 
         read -p "Do you want to restore another file or subdirectory? [Y]/[N]: " RESTORE_ANOTHER
 
@@ -55,22 +55,12 @@ restore_file_subdir() {
 restore_directory() {
  #   local SELECTED_DIRECTORY="$1"
     while true; do
-
-        read -p "Enter the date of the backup to restore (format: yyyymmdd_HHMM), or enter '0' to go back: " BACKUP_DATE
-        if [[ "$BACKUP_DATE" == "0" ]]; then
-            prompt_user_directory_type
-        fi
-        MATCHING_DIR=$(ssh "$REMOTE" "ls "$DST_DIR/$SEL_DIR/" | grep "$BACKUP_DATE"")
-        if [ -n "$MATCHING_DIR" ]; then
-            echo "Matching backup for the entered date: $MATCHING_DIR"
-            mkdir -p "$HOME/RESTORE/"
-            local DESTINATION_DIR="$HOME/RESTORE/$MATCHING_DIR"
             local LOG_FILE="${LOG_FILE_INCR}"
             if [ "$SEL_DIR" == "MACHINES" ]; then
                 LOG_FILE="${LOG_FILE_DIFF}"
             fi
-            if rsync -r "${PARAMETERS[@]}" "$LOG_FILE" "$REMOTE:$DST_DIR/$SEL_DIR/$MATCHING_DIR" "$DESTINATION_DIR"; then
-                echo "Restoration of backup '$MATCHING_DIR' from $SEL_DIR to $DESTINATION_DIR successful."
+            if rsync -r "${PARAMETERS[@]}" "$LOG_FILE" "$REMOTE:$DST_DIR/$SEL_DIR/$MATCHING_DIR" "$RESTORE_DIR"; then
+                echo "Restoration of backup '$MATCHING_DIR' from $SEL_DIR to $RESTORE_DIR successful."
             else
                 echo "Error: Restoration of backup '$MATCHING_DIR' from $SEL_DIR failed."
             fi
@@ -85,7 +75,7 @@ restore_directory() {
 }
 
 restore_option_prompt() {
-    local SELECTED_DIRECTORY="$1"
+#    local SELECTED_DIRECTORY="$1"
     while true; do
         read -p "Do you want to restore a file (F), the entire directory (G), or go back (0)? " RESTORE_OPTION
         case $RESTORE_OPTION in
@@ -114,7 +104,7 @@ list_backups() {
 prompt_user_directory_type() {
     local valid_choice=false
     while [ "$valid_choice" == false ]; do
-        echo "Choose the directory to restore: "
+        echo "Choose a directory to restore: "
         echo "[0] EXIT"
         for ((i=0; i<${#TARGET_DIR_ARR[@]}; i++)); do
             echo "[$((i+1))] ${TARGET_DIR_ARR[i]}"
@@ -129,8 +119,18 @@ prompt_user_directory_type() {
                 ;;
             [1-6])
                 SEL_DIR="${TARGET_DIR_ARR[$((CHOICE-1))]}"
-                list_backups "$SEL_DIR"
-                restore_option_prompt "$SEL_DIR"
+                list_backups
+                read -p "Enter the date of the backup to restore (format: yyyymmdd_HHMM), or enter '0' to go back: " BACKUP_DATE
+                if [[ "$BACKUP_DATE" == "0" ]]; then
+                return
+                fi
+                MATCHING_DIR=$(ssh "$REMOTE" "ls "$DST_DIR/$SEL_DIR/" | grep "$BACKUP_DATE"")
+                echo "Matching backup for the entered date: $MATCHING_DIR"
+                RESTORE_DIR="$HOME/RESTORE_$TIMESTAMP/$MATCHING_DIR"
+                if [ -n "$MATCHING_DIR" ]; then
+                mkdir -p "$RESTORE_DIR"
+                fi
+                restore_option_prompt 
                 valid_choice=true
                 ;;
             *)
