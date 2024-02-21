@@ -7,7 +7,7 @@
 # Usage: ./restore_script.sh
 
 SRC_DIR="/home/rsync_adm/"
-DST_DIR="/home/rsync_adm/backup_storage/"
+DST_DIR="/home/rsync_adm/backup_storage"
 REMOTE="rsync_adm@backup-srv"
 TIMESTAMP=$(date +%Y%m%d_%H%M)
 PARAMETERS=(
