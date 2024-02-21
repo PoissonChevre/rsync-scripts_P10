@@ -63,6 +63,7 @@ restore_directory() {
         MATCHING_DIR=$(ssh "$REMOTE" "ls "$DST_DIR/$SEL_DIR/" | grep "$BACKUP_DATE"")
         if [ -n "$MATCHING_DIR" ]; then
             echo "Matching backup for the entered date: $MATCHING_DIR"
+            mkdir -p "$HOME/RESTORE/"
             local DESTINATION_DIR="$HOME/RESTORE/$MATCHING_DIR"
             local LOG_FILE="${LOG_FILE_INCR}"
             if [ "$SEL_DIR" == "MACHINES" ]; then
