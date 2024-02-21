@@ -6,7 +6,6 @@
 # Description: Performs restoration of backups using rsync.
 # Usage: ./restore_script.sh
 
-SRC_DIR="/home/rsync_adm/"
 DST_DIR="/home/rsync_adm/backup_storage"
 REMOTE="rsync_adm@backup-srv"
 TIMESTAMP=$(date +%Y%m%d_%H%M)
@@ -117,7 +116,7 @@ restore_option_prompt() {
 list_backups() {
     local SELECTED_DIRECTORY="$1"
     echo "Listing snapshots available for restore in $SELECTED_DIRECTORY directory: "
-    ssh "$REMOTE" "cd $DST_DIR/$SELECTED_DIRECTORY/ && ls -d */"
+    ssh "$REMOTE" "cd $DST_DIR/$SELECTED_DIRECTORY/ && ls "
 }
 
 prompt_user_directory_type() {
