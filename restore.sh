@@ -24,7 +24,7 @@ TARGET_DIR_ARR=(
     "TICKETS"
 )
 
-# Function to restore a file or subdirectory
+# Function to restore a file or a subdirectory
 restore_file_subdir() {
     echo "Listing files and subdirectories available for restore in $MATCHING_DIR : "
     ssh "$REMOTE" "cd $DST_DIR/$SEL_DIR/$MATCHING_DIR/ && ls -R"
@@ -45,7 +45,7 @@ restore_file_subdir() {
     fi
 }
 
-# Function to restore the entire directory
+# Function to restore an entire directory
 restore_directory() {
     # Perform rsync to restore the entire directory
     if rsync -r "${PARAMETERS[@]}" "$LOG_FILE" "$REMOTE:$DST_DIR/$SEL_DIR/$MATCHING_DIR/" "$RESTORE_DIR"; then
@@ -77,7 +77,7 @@ restore_option_prompt() {
     done
 }
 
-# Function to list available backups
+# Function to list available backups 
 list_backups() {
     echo "Listing snapshots available in $SEL_DIR : "
     ssh "$REMOTE" "cd $DST_DIR/$SEL_DIR/ && ls "
@@ -92,7 +92,7 @@ list_backups() {
     MATCHING_DIR=$(ssh "$REMOTE" "ls "$DST_DIR/$SEL_DIR/" | grep "$BACKUP_DATE"")
     if [ -n "$MATCHING_DIR" ]; then
         echo "Matching backup for the entered date: $MATCHING_DIR"
-        RESTORE_DIR="$HOME/RESTORE/$SEL_DIR_$MATCHING_DIR"
+        RESTORE_DIR="$HOME/RESTORE/${SEL_DIR}_$MATCHING_DIR"
         mkdir -p "$HOME/RESTORE/"
     else
         echo "Error: No matching backup found for the entered date '$BACKUP_DATE' in $SEL_DIR directory."
@@ -120,7 +120,7 @@ prompt_user_directory_type() {
                 ;;
             [1-6])
                 SEL_DIR="${TARGET_DIR_ARR[$((CHOICE-1))]}"
-                # Set the appropriate log file based on the directory
+                # Set the appropriate log file 
                 if [ "$SEL_DIR" == "MACHINES" ]; then
                     LOG_FILE="${LOG_FILE_DIFF}"
                 else 
