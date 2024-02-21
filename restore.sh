@@ -24,16 +24,19 @@ TARGET_DIR_ARR=(
     "TICKETS"
 )
 
+# Function to restore a file or subdirectory
 restore_file_subdir() {
-
     echo "Listing files and subdirectories available for restore in $MATCHING_DIR : "
     ssh "$REMOTE" "cd $DST_DIR/$SEL_DIR/$MATCHING_DIR/ && ls -R"
     read -p "Enter the path of the file/subdirectory to restore (e.g., 'file.ext', 'subdirectory/file2.ext', or all 'subdirectory/'): " RESTORE_PATH
+
+    # Perform rsync to restore the chosen file or subdirectory
     if rsync -r "${PARAMETERS[@]}" "$LOG_FILE" "$REMOTE:$DST_DIR/$SEL_DIR/$MATCHING_DIR/$RESTORE_PATH" "$RESTORE_DIR"; then
         echo "Restoration of backup '$RESTORE_PATH' from $MATCHING_DIR to $RESTORE_DIR successful."
     else
         echo "Error: Restoration of backup '$RESTORE_PATH' from $SEL_DIR failed."
     fi
+
     read -p "Do you want to restore another file or subdirectory? [Y]/[N]: " RESTORE_ANOTHER
     if [[ "$RESTORE_ANOTHER" =~ ^[Yy]$ ]]; then
         continue
@@ -42,8 +45,9 @@ restore_file_subdir() {
     fi
 }
 
+# Function to restore the entire directory
 restore_directory() {
-
+    # Perform rsync to restore the entire directory
     if rsync -r "${PARAMETERS[@]}" "$LOG_FILE" "$REMOTE:$DST_DIR/$SEL_DIR/$MATCHING_DIR/" "$RESTORE_DIR"; then
         echo "Restoration of backup '$MATCHING_DIR' from $SEL_DIR to $RESTORE_DIR successful."
     else
@@ -52,8 +56,8 @@ restore_directory() {
     prompt_user_directory_type
 }
 
+# Function to prompt user for file or directory restoration option
 restore_option_prompt() {
-
     while true; do
         read -p "Do you want to restore a file/subdirectory (F), the entire directory (G), or go back (0)? " RESTORE_OPTION
         case $RESTORE_OPTION in
@@ -73,14 +77,18 @@ restore_option_prompt() {
     done
 }
 
+# Function to list available backups
 list_backups() {
-
     echo "Listing snapshots available in $SEL_DIR : "
     ssh "$REMOTE" "cd $DST_DIR/$SEL_DIR/ && ls "
     read -p "Enter the date of the backup to restore (format: YYYYmmdd_HHMM), or enter '0' to go back: " BACKUP_DATE
+
+    # Check if the user wants to go back to the main directory selection
     if [[ "$BACKUP_DATE" == "0" ]]; then
         return
     fi
+
+    # Find matching backup directory
     MATCHING_DIR=$(ssh "$REMOTE" "ls "$DST_DIR/$SEL_DIR/" | grep "$BACKUP_DATE"")
     if [ -n "$MATCHING_DIR" ]; then
         echo "Matching backup for the entered date: $MATCHING_DIR"
@@ -89,10 +97,11 @@ list_backups() {
     else
         echo "Error: No matching backup found for the entered date '$BACKUP_DATE' in $SEL_DIR directory."
         echo "Restoration canceled."
-    continue
+        continue
     fi
 }
 
+# Function to prompt user for directory selection
 prompt_user_directory_type() {
     local valid_choice=false
     while [ "$valid_choice" == false ]; do
@@ -111,6 +120,7 @@ prompt_user_directory_type() {
                 ;;
             [1-6])
                 SEL_DIR="${TARGET_DIR_ARR[$((CHOICE-1))]}"
+                # Set the appropriate log file based on the directory
                 if [ "$SEL_DIR" == "MACHINES" ]; then
                     LOG_FILE="${LOG_FILE_DIFF}"
                 else 
@@ -127,6 +137,7 @@ prompt_user_directory_type() {
     done
 }
 
+# Main function to start the restoration process
 main() {
     echo "Starting restoration process..."
     while true; do
@@ -136,4 +147,3 @@ main() {
 
 # Execute the main function
 main
-
