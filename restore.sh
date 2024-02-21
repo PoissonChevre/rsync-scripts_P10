@@ -117,7 +117,7 @@ prompt_user_directory_type() {
 
         case ${CHOICE} in    
             0)    
-                    echo "bye"
+                    echo "bye bye Elohim"
                     exit 0
                 ;;
             [1-6])
