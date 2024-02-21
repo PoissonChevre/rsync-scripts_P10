@@ -10,7 +10,8 @@ DST_DIR="/home/rsync_adm/backup_storage"
 REMOTE="rsync_adm@backup-srv"
 PARAMETERS=(
     -a              # archive mode; equals -rlptgoD (no -H,-A,-X)
-    -q              # --quiet
+#    -q              # --quiet
+    -v              # --verbose
     -e "ssh"        # use SSH for remote connection
 )
 LOG_FILE_INCR="--log-file=/var/log/rsync/incr_restore.log"
@@ -28,7 +29,7 @@ TARGET_DIR_ARR=(
 restore_file_subdir() {
     echo "Listing files and subdirectories available for restore in $MATCHING_DIR : "
     ssh "$REMOTE" "cd $DST_DIR/$SEL_DIR/$MATCHING_DIR/ && ls -R"
-    read -p "Enter the path of the file/subdirectory to restore (e.g., 'file.ext', 'subdirectory/file2.ext', or all 'subdirectory/'): " RESTORE_PATH
+    read -p "Enter the path of the file/subdirectory to restore (e.g., 'file.ext', 'subdirectory/file2.ext', or all the 'subdirectory'): " RESTORE_PATH
 
     # Perform rsync to restore the chosen file or subdirectory
     if rsync -r "${PARAMETERS[@]}" "$LOG_FILE" "$REMOTE:$DST_DIR/$SEL_DIR/$MATCHING_DIR/$RESTORE_PATH" "$RESTORE_DIR"; then
