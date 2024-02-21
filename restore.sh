@@ -58,8 +58,7 @@ restore_directory() {
     else
         echo "Error: Restoration of backup '$MATCHING_DIR' from $SEL_DIR failed."
     fi
-    return
-    
+    prompt_user_directory_type
 }
 
 restore_option_prompt() {
