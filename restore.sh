@@ -1,17 +1,24 @@
 #!/bin/bash
 
-# Restoration Script
+# -----------------------------------------------------------------------------
+# Backup Restoration Script
+# -----------------------------------------------------------------------------
 # Author: Renaud CHARLIER
 # Date: 18-02-2024
-# Description: Performs restoration of backups using rsync.
+# Description: Performs restoration of backups using rsync. Interactive script 
+# with prompts asking the user the location of the files/directory and the type
+# of restore to perform, entire-directory or file-specific.
 # Usage: ./restore_script.sh
+# Note: Ensure SSH password-less authentication is set up for rsync_adm@backup-srv.
+#       https://explainshell.com/explain/1/rsync
+# -----------------------------------------------------------------------------
 
 DST_DIR="/home/rsync_adm/backup_storage"
 REMOTE="rsync_adm@backup-srv"
 PARAMETERS=(
     -a              # archive mode; equals -rlptgoD (no -H,-A,-X)
-#    -q              # --quiet
-    -v              # --verbose
+    -q              # --quiet
+#    -v              # --verbose
     -e "ssh"        # use SSH for remote connection
 )
 LOG_FILE_INCR="--log-file=/var/log/rsync/incr_restore.log"
