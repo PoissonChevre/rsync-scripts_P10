@@ -84,7 +84,7 @@ restore_option_prompt() {
 list_backups() {
     echo "Listing snapshots available in $SEL_DIR : "
     ssh "$REMOTE" "cd $DST_DIR/$SEL_DIR/ && ls "
-    read -p "Enter the date of the backup to restore (format) [YYYYmmdd_HHMM], or enter [0] to go back: " BACKUP_DATE
+    read -p "Enter the date & hour of the backup to restore [YYYYmmdd_HHMM], or enter [0] to go back: " BACKUP_DATE
 
     # Check if the user wants to go back to the main directory selection
     if [[ "$BACKUP_DATE" == "0" ]]; then
@@ -113,7 +113,7 @@ prompt_user_directory_type() {
             echo "[$((i+1))] ${TARGET_DIR_ARR[i]}"
         done
 
-        read -p "Enter your choice (0-6), 0 to EXIT: " CHOICE
+        read -p "Enter your choice [0-6], [0] to EXIT: " CHOICE
 
         case ${CHOICE} in    
             0)    
