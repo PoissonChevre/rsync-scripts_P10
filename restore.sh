@@ -113,27 +113,23 @@ list_backups() {
 prompt_user_directory_type() {
     local valid_choice=false
     while [ "$valid_choice" == false ]; do
-        echo "Choose the directory to restore (number 0-6), 0 to EXIT: "
+        echo "Choose the directory to restore: "
         echo "[0] EXIT"
         for ((i=0; i<${#TARGET_DIR_ARR[@]}; i++)); do
             echo "[$((i+1))] ${TARGET_DIR_ARR[i]}"
         done
 
-        read -p "Enter your choice (0-6): " CHOICE
+        read -p "Enter your choice (0-6), 0 to EXIT: " CHOICE
 
-        case ${CHOICE} in
-            [0-6])
-                if [ "$CHOICE" -eq 0 ]; then
+        case ${CHOICE} in    
+            0)    
                     echo "bye"
                     exit 0
-                fi
+                ;;
+            [1-6])
                 SEL_DIR="${TARGET_DIR_ARR[$((CHOICE-1))]}"
                 list_backups "$SEL_DIR"
-                if [ "$SEL_DIR" == "MACHINES" ]; then
-                    restore_directory "$SEL_DIR"
-                else
-                    restore_option_prompt "$SEL_DIR"
-                fi
+                restore_option_prompt "$SEL_DIR"
                 valid_choice=true
                 ;;
             *)
