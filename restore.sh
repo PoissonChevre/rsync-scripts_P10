@@ -107,7 +107,7 @@ restore_option_prompt() {
 list_backups() {
     local SELECTED_DIRECTORY="$1"
     echo "Listing snapshots available for restore in $SELECTED_DIRECTORY directory: "
-    ssh "$REMOTE" "cd $DST_DIR/$SELECTED_DIRECTORY/ && ls -d"
+    ssh "$REMOTE" "cd $DST_DIR/$SELECTED_DIRECTORY/ && ls "
 }
 
 prompt_user_directory_type() {
