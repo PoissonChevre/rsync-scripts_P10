@@ -8,8 +8,8 @@
 # Description: Performs a differential backup using rsync, keeping backups
 # from the specified number of days and ensuring at least the two most recent
 # backups are always retained.
-# Usage: ./backup_diff.sh <TARGET_DIR> <RETENTION>
-# Example: ./backup_diff.sh MACHINES 2
+# Usage: ./backup_diff.sh <TARGET_DIR> <DAY_FULL_BACKUP> <RETENTION>
+# Example: ./backup_diff.sh MACHINES 7 7 (MACHINES SUNDAY 7 DAYS)
 # Note: Ensure SSH password-less authentication is set up for rsync_adm@backup-srv.
 #       https://explainshell.com/explain/1/rsync
 #       dd if=/dev/zero of=/chemin/vers/repertoire/MACHINE/vm-1Go bs=4096 count=262144 (créé un fichier de 1Go de zéros binaires, 262144 x 4Ko)
@@ -19,26 +19,29 @@
 # -----------------------------------------------------------------------------
 
 # Check for required arguments
-if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 <TARGET_DIR> <RETENTION>"
+if [ "$#" -ne 3 ]; then
+    echo "Usage: $0 <TARGET_DIR> <DAY_FULL_BACKUP> <RETENTION> "
     exit 1
 fi
 
 # Assign arguments to variables
 TARGET_DIR="$1"
-RETENTION="$2"
+# Day of the week for the full backup Mon=1 ==> Sun=7
+DAY_FULL_BACKUP="$2"
+RETENTION="$3"
+# TARGET_DIR FICHIERS | MAILS | MACHINES | RH | SITE | TICkETS
 SRC_DIR="/home/rsync_adm/$TARGET_DIR/"
 DST_DIR="/home/rsync_adm/backup_storage/$TARGET_DIR/"
-REMOTE="rsync_adm@backup-srv" # USER=rsync_adm
+REMOTE="rsync_adm@backup-srv" 
 TIMESTAMP=$(date +%Y%m%d_%H%M)
 PARAMETERS=(
     -a              # --archive, equivalent to -rlptgoD (--recursive;--links;--perms;--times;--group;--owner;equivalent to --devices & --specials)
     -v              # --verbose
- #   -q             # --quiet (better with cron) ==> verbose mode for the demo
     -P              # equivalent to --partial --progress
     -e ssh          # ssh remote
     --bwlimit=50000 # KBPS ==> bandwith max 50 mb/s
     --log-file=/var/log/rsync/diff_backup.log # path to the log file
+ #   -q             # --quiet (better with cron) ==> verbose mode for the demo
 )
 
 # Find the last full backup or will create one if there is no full backup found

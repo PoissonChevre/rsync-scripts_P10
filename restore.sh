@@ -18,8 +18,8 @@ REMOTE="rsync_adm@backup-srv"
 PARAMETERS=(
     -a              # archive mode; equals -rlptgoD (no -H,-A,-X)
     -q              # --quiet
-#    -v              # --verbose
     -e "ssh"        # use SSH for remote connection
+#    -v              # --verbose
 )
 # different log file for incremental and differential
 LOG_FILE_INCR="--log-file=/var/log/rsync/incr_restore.log"
