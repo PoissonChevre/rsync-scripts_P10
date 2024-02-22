@@ -70,9 +70,9 @@ is_last_full_backup_old() {
     fi
 }
 
-# Find the most recent backup (using mtime for directory change time), create less than 1620 minutes (27 heures)
+# Find the most recent backup (using mtime for directory change time), create less than 1680 minutes (28 heures)
 is_last_backup() {
-    LAST_BACKUP=$(ssh $REMOTE "find $DST_DIR -maxdepth 1 -name 'backup_*' -cmin 100")
+    LAST_BACKUP=$(ssh $REMOTE "find $DST_DIR -maxdepth 1 -name 'backup_*' -cmin -1620 | sort | tail -n 1 ")
     if [ -n "$LAST_FULL_BACKUP" ]; then
         # Display last backup path
         echo "Last backup: $LAST_BACKUP"
