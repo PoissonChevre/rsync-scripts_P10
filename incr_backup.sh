@@ -87,7 +87,7 @@ is_last_backup() {
 # Clean up old incremental backups
 cleanup_old_incr_backups() {
     echo "Cleaning up old incremental backups..."
-    ssh $REMOTE "find $DST_DIR -maxdepth 1 -name 'backup_incr*' -ctime +$RETENTION -exec rm -rf {} \;"
+    ssh $REMOTE "find $DST_DIR -maxdepth 1 -name 'backup_incr*' -exec rm -rf {} \;"
 }
 
 # Clean up old FULL backups
