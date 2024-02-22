@@ -24,7 +24,7 @@ PARAMETERS=(
 # different log file for incremental and differential
 LOG_FILE_INCR="--log-file=/var/log/rsync/incr_restore.log"
 LOG_FILE_DIFF="--log-file=/var/log/rsync/diff_restore.log"
-# 2D table containing backup directories
+# 2D array containing backup directories
 TARGET_DIR_ARR=("FICHIERS" "MACHINES" "MAILS" "RH" "SITE" "TICKETS")
 
 # Function to restore a file or a subdirectory
@@ -86,7 +86,7 @@ list_backups() {
     ssh "$REMOTE" "cd $DST_DIR/$SEL_DIR/ && ls "
     read -p "Enter the date & hour of the backup to restore [YYYYmmdd_HHMM], or enter [0] to go back: " BACKUP_DATE
 
-    # Check if the user wants to go back to the main directory selection
+    # Check if the user wants to go back to the main prompt
     if [[ "$BACKUP_DATE" == "0" ]]; then
         prompt_user_directory_type
     fi
