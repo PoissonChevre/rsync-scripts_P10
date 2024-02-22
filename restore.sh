@@ -10,7 +10,7 @@
 # of restore to perform, entire-directory or file-specific.
 # Usage: ./restore_script.sh
 # Note: Ensure SSH password-less authentication is set up for rsync_adm@backup-srv.
-## GITHUB: https://github.com/PoissonChevre/rsync-scripts_P10
+# GITHUB: https://github.com/PoissonChevre/rsync-scripts_P10
 # -----------------------------------------------------------------------------
 
 DST_DIR="/home/rsync_adm/backup_storage"
