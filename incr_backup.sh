@@ -12,6 +12,7 @@
 # Example: ./backup_script.sh TICKETS 7
 # Note: Ensure SSH password-less authentication is set up for rsync_adm@backup-srv.
 #       https://explainshell.com/explain/1/rsync
+# GITHUB: https://github.com/PoissonChevre/rsync-scripts_P10
 # -----------------------------------------------------------------------------
 
 # Check for required arguments

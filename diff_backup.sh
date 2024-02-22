@@ -15,6 +15,7 @@
 #       dd if=/dev/zero of=/chemin/vers/repertoire/MACHINE/vm-1Go bs=4096 count=262144 (créé un fichier de 1Go de zéros binaires, 262144 x 4Ko)
 #       dd if=/dev/zero of=~/MACHINES/vm4 bs=4096 count=120000
 #       cat vm1 vm2 >> vm3
+# GITHUB: https://github.com/PoissonChevre/rsync-scripts_P10
 # -----------------------------------------------------------------------------
 
 # Check for required arguments
