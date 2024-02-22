@@ -9,7 +9,7 @@
 # from the specified number of days and ensuring the most recent
 # backups are always retained.
 # Usage: ./backup_script.sh <TARGET_DIR> <DAY_FULL_BACKUP> <RETENTION> 
-# Example: ./backup_script.sh TICKETS 7 7
+# Example: ./backup_script.sh TICKETS 7 7 (TICKETS SUNDAY 7 DAYS)
 # Note: Ensure SSH password-less authentication is set up for rsync_adm@backup-srv.
 #       https://explainshell.com/explain/1/rsync
 # GITHUB: https://github.com/PoissonChevre/rsync-scripts_P10
@@ -109,9 +109,8 @@ perform_full_backup() {
 perform_incr_backup() {
     if is_full_backup_existing; then
         # Last full backup is older than RETENTION days and  today is DAY_FULL_BACKUP, create a new full backup
-    #    if is_last_full_backup_old && [ "$(date +%u)" -eq $DAY_FULL_BACKUP ]; then
-        if [ "$(date +%u)" -eq $DAY_FULL_BACKUP ]; then
-            echo "Last full backup is older than $RETENTION days." 
+        if is_last_full_backup_old && [ "$(date +%u)" -eq $DAY_FULL_BACKUP ]; then
+            echo "It's day $DAY_FULL_BACKUP and full backup is older than $RETENTION days." 
             perform_full_backup
             cleanup_old_full_backups
             cleanup_old_incr_backups
