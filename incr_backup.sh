@@ -109,7 +109,8 @@ perform_full_backup() {
 perform_incr_backup() {
     if is_full_backup_existing; then
         # Last full backup is older than RETENTION days and  today is DAY_FULL_BACKUP, create a new full backup
-        if is_last_full_backup_old && [ "$(date +%u)" -eq $DAY_FULL_BACKUP ]; then
+    #    if is_last_full_backup_old && [ "$(date +%u)" -eq $DAY_FULL_BACKUP ]; then
+        if [ "$(date +%u)" -eq $DAY_FULL_BACKUP ]; then
             echo "Last full backup is older than $RETENTION days." 
             perform_full_backup
             cleanup_old_full_backups
