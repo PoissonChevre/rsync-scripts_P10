@@ -6,7 +6,7 @@
 # Author: Renaud CHARLIER
 # Date: 18-02-2024
 # Description: Performs a differential backup using rsync, keeping backups
-# from the specified number of days and ensuring at least the two most recent
+# from the specified number of days and ensuring at least the most recent
 # backups are always retained.
 # Usage: ./backup_diff.sh <TARGET_DIR> <DAY_FULL_BACKUP> <RETENTION>
 # Example: ./backup_diff.sh MACHINES 7 7 (MACHINES SUNDAY 7 DAYS)
@@ -99,8 +99,8 @@ perform_full_backup() {
 perform_diff_backup() {
     if is_full_backup_existing; then
         # Last full backup is older than RETENTION days or today is Sunday, create a new full backup
-        if is_last_full_backup_old || [ "$(date +%u)" -eq 7 ]; then
-            echo "Last full backup is older than $RETENTION days." 
+        if is_last_full_backup_old && [ "$(date +%u)" -eq $DAY_FULL_BACKUP ]; then
+            echo "It's day $DAY_FULL_BACKUP and full backup is older than $RETENTION days." 
             perform_full_backup
             cleanup_old_full_backups
             cleanup_old_diff_backups

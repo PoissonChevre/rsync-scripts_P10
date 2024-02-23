@@ -26,7 +26,7 @@ TARGET_DIR="$1"
 # Day of the week for the full backup Mon=1 ==> Sun=7
 DAY_FULL_BACKUP="$2"
 RETENTION="$3"
-# TARGET_DIR FICHIERS | MAILS | MACHINES | RH | SITE | TICkETS
+# TARGET_DIR FICHIERS | MAILS | MACHINES | RH | SITE | TICKETS
 SRC_DIR="/home/rsync_adm/$TARGET_DIR/"
 DST_DIR="/home/rsync_adm/backup_storage/$TARGET_DIR/"
 REMOTE="rsync_adm@backup-srv" 
